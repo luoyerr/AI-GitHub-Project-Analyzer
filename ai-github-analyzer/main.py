@@ -16,7 +16,7 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from src.models.base_models import AnalysisConfig, AnalysisResult, AnalysisStatus
+from src.models.base_models import AnalysisConfig, AnalysisResult, AnalysisStatus, RepositoryInfo
 
 app = typer.Typer(
     name="ai-github-analyzer",
@@ -119,7 +119,16 @@ def analyze(
         progress.update(task, description="[green]Analysis complete!")
     
     # Create placeholder result
+    # Skeleton-safe design: provide reasonable defaults for unimplemented modules
+    placeholder_repo_info = RepositoryInfo(
+        url=repo_url,
+        name="placeholder",
+        owner="placeholder",
+        description="Repository info pending scanner implementation",
+    )
+    
     result = AnalysisResult(
+        repo_info=placeholder_repo_info,
         status=AnalysisStatus.COMPLETED,
         summary="Analysis framework initialized. Implementation pending.",
         tech_stack=["Python", "Typer", "Rich", "Loguru", "Pydantic"],

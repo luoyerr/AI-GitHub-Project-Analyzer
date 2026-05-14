@@ -19,9 +19,9 @@ class AnalysisStatus(str, Enum):
 
 class RepositoryInfo(BaseModel):
     """Basic repository information."""
-    url: str
-    name: str
-    owner: str
+    url: str = ""
+    name: str = "unknown"
+    owner: str = "unknown"
     description: Optional[str] = None
     language: Optional[str] = None
     stars: int = 0

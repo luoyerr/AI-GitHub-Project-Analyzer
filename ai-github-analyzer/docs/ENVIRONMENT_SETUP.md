@@ -1,16 +1,16 @@
-# Environment Setup Guide
+# 环境设置指南
 
-## Quick Start with Anaconda
+## 使用 Anaconda 快速开始
 
-This guide provides step-by-step instructions for setting up the development environment using Anaconda.
+本指南提供使用 Anaconda 设置开发环境的分步说明。
 
-### Prerequisites
+### 前置要求
 
-1. **Install Anaconda or Miniconda**
-   - Download from: https://www.anaconda.com/download
-   - Miniconda (lightweight): https://docs.conda.io/en/latest/miniconda.html
+1. **安装 Anaconda 或 Miniconda**
+   - 下载地址：https://www.anaconda.com/download
+   - Miniconda（轻量级）：https://docs.conda.io/en/latest/miniconda.html
 
-2. **Verify Installation**
+2. **验证安装**
    ```bash
    conda --version
    python --version
@@ -18,7 +18,7 @@ This guide provides step-by-step instructions for setting up the development env
 
 ---
 
-## Step 1: Clone the Repository
+## 步骤 1：克隆仓库
 
 ```bash
 git clone <repository-url>
@@ -27,57 +27,57 @@ cd ai-github-analyzer
 
 ---
 
-## Step 2: Create Conda Environment
+## 步骤 2：创建 Conda 环境
 
-Create a new environment with Python 3.12:
+使用 Python 3.12 创建新环境：
 
 ```bash
 conda create -n ai-github-analyzer python=3.12 -y
 ```
 
-**Explanation**:
-- `-n ai-github-analyzer`: Names the environment
-- `python=3.12`: Specifies Python version
-- `-y`: Automatically confirms installation
+**解释**：
+- `-n ai-github-analyzer`：命名环境
+- `python=3.12`：指定 Python 版本
+- `-y`：自动确认安装
 
 ---
 
-## Step 3: Activate Environment
+## 步骤 3：激活环境
 
 ```bash
 conda activate ai-github-analyzer
 ```
 
-You should see `(ai-github-analyzer)` in your terminal prompt.
+您应该在终端提示符中看到 `(ai-github-analyzer)`。
 
 ---
 
-## Step 4: Install Dependencies
+## 步骤 4：安装依赖
 
-### Option A: Install from pyproject.toml (Recommended)
+### 选项 A：从 pyproject.toml 安装（推荐）
 
 ```bash
 pip install -e .
 ```
 
-This installs the package in **editable/development mode**, meaning:
-- Changes to source code are immediately reflected
-- No need to reinstall after modifications
-- All dependencies from `pyproject.toml` are installed
+这将以**可编辑/开发模式**安装包，意味着：
+- 源代码的更改会立即反映
+- 修改后无需重新安装
+- 安装 `pyproject.toml` 中的所有依赖
 
-### Option B: Install with Development Dependencies
+### 选项 B：安装开发依赖
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-This includes additional tools:
-- `pytest`: Testing framework
-- `black`: Code formatter
-- `ruff`: Fast linter
-- `mypy`: Type checker
+这包括额外的工具：
+- `pytest`：测试框架
+- `black`：代码格式化器
+- `ruff`：快速代码检查器
+- `mypy`：类型检查器
 
-### Option C: Manual Installation (if needed)
+### 选项 C：手动安装（如需要）
 
 ```bash
 pip install typer>=0.9.0 rich>=13.7.0 loguru>=0.7.0 pydantic>=2.5.0
@@ -85,121 +85,121 @@ pip install typer>=0.9.0 rich>=13.7.0 loguru>=0.7.0 pydantic>=2.5.0
 
 ---
 
-## Step 5: Verify Installation
+## 步骤 5：验证安装
 
-Test that everything is working:
+测试一切是否正常：
 
 ```bash
-# Check package installation
+# 检查包安装
 python main.py version
 
-# Test analyze command
+# 测试分析命令
 python main.py analyze --help
 
-# Verify imports work
-python -c "from src.models.base_models import AnalysisConfig; print('✓ Imports OK')"
+# 验证导入正常工作
+python -c "from src.models.base_models import AnalysisConfig; print('✓ 导入正常')"
 ```
 
-Expected output:
+预期输出：
 ```
 AI GitHub Analyzer v0.1.0
 ```
 
 ---
 
-## Step 6: Configure Environment Variables (Optional)
+## 步骤 6：配置环境变量（可选）
 
-Create a `.env` file for configuration:
+创建 `.env` 文件进行配置：
 
 ```bash
-# Copy example env file
+# 复制示例 env 文件
 cp .env.example .env
 
-# Edit with your settings
-nano .env  # or use your preferred editor
+# 使用您的设置编辑
+nano .env  # 或使用您喜欢的编辑器
 ```
 
-Example `.env` content:
+示例 `.env` 内容：
 ```env
-# AI Provider Configuration
+# AI 提供商配置
 AI_PROVIDER=openai
 AI_MODEL=gpt-4-turbo
 AI_API_KEY=your_api_key_here
 
-# Agent Settings
+# 代理设置
 AGENT_TIMEOUT=60
 AGENT_MAX_RETRIES=2
 AGENT_PARALLEL_LIMIT=4
 
-# Logging
+# 日志
 LOG_LEVEL=INFO
 ```
 
-**Note**: The `.env` file is gitignored and should never be committed.
+**注意**：`.env` 文件已被 gitignore，绝不应提交。
 
 ---
 
-## Development Workflow
+## 开发工作流
 
-### Running the Application
+### 运行应用程序
 
 ```bash
-# Basic usage
+# 基本用法
 python main.py analyze https://github.com/username/repo
 
-# With options
+# 带选项
 python main.py analyze https://github.com/username/repo --format json --verbose
 ```
 
-### Running Tests
+### 运行测试
 
 ```bash
-# Run all tests
+# 运行所有测试
 pytest tests/ -v
 
-# Run with coverage
+# 运行并生成覆盖率报告
 pytest tests/ --cov=src --cov-report=html
 
-# Run specific test file
+# 运行特定测试文件
 pytest tests/test_scanner.py -v
 ```
 
-### Code Quality Checks
+### 代码质量检查
 
 ```bash
-# Format code
+# 格式化代码
 black src/ main.py
 
-# Lint code
+# 检查代码
 ruff check src/ main.py
 
-# Auto-fix linting issues
+# 自动修复代码检查问题
 ruff check src/ main.py --fix
 
-# Type checking
+# 类型检查
 mypy src/
 ```
 
-### Pre-commit Hook Setup (Optional)
+### Pre-commit Hook 设置（可选）
 
 ```bash
-# Install pre-commit
+# 安装 pre-commit
 pip install pre-commit
 
-# Initialize hooks
+# 初始化 hooks
 pre-commit install
 
-# Run manually
+# 手动运行
 pre-commit run --all-files
 ```
 
 ---
 
-## Troubleshooting
+## 故障排除
 
-### Issue: Conda command not found
+### 问题：Conda 命令未找到
 
-**Solution**: Add conda to PATH
+**解决方案**：将 conda 添加到 PATH
 ```bash
 # Windows (PowerShell)
 $env:Path += ";C:\Users\<YourUser>\Anaconda3\Scripts"
@@ -208,31 +208,31 @@ $env:Path += ";C:\Users\<YourUser>\Anaconda3\Scripts"
 export PATH="$HOME/anaconda3/bin:$PATH"
 ```
 
-Add to your shell profile (`~/.bashrc`, `~/.zshrc`, or PowerShell profile) for persistence.
+添加到您的 shell 配置文件（`~/.bashrc`、`~/.zshrc` 或 PowerShell profile）以持久化。
 
 ---
 
-### Issue: Permission errors during installation
+### 问题：安装期间权限错误
 
-**Solution**: Ensure you're in the activated environment
+**解决方案**：确保您在激活的环境中
 ```bash
 conda activate ai-github-analyzer
 pip install -e .
 ```
 
-Do NOT use `sudo` with pip in conda environments.
+在 conda 环境中不要对 pip 使用 `sudo`。
 
 ---
 
-### Issue: Dependency conflicts
+### 问题：依赖冲突
 
-**Solution**: Create fresh environment
+**解决方案**：创建新环境
 ```bash
-# Remove old environment
+# 删除旧环境
 conda deactivate
 conda env remove -n ai-github-analyzer
 
-# Recreate
+# 重新创建
 conda create -n ai-github-analyzer python=3.12 -y
 conda activate ai-github-analyzer
 pip install -e .
@@ -240,101 +240,101 @@ pip install -e .
 
 ---
 
-### Issue: Module not found errors
+### 问题：模块未找到错误
 
-**Solution**: Ensure you're in the project root directory
+**解决方案**：确保您在项目根目录
 ```bash
-# Navigate to project root
+# 导航到项目根目录
 cd path/to/ai-github-analyzer
 
-# Verify structure
+# 验证结构
 ls src/
-# Should show: orchestrator/ scanner/ classifier/ etc.
+# 应显示：orchestrator/ scanner/ classifier/ 等
 
-# Run from project root
+# 从项目根目录运行
 python main.py version
 ```
 
 ---
 
-### Issue: Python version mismatch
+### 问题：Python 版本不匹配
 
-**Solution**: Verify Python version
+**解决方案**：验证 Python 版本
 ```bash
 python --version
-# Should show: Python 3.12.x
+# 应显示：Python 3.12.x
 
-# If wrong version, recreate environment
+# 如果版本错误，重新创建环境
 conda env remove -n ai-github-analyzer
 conda create -n ai-github-analyzer python=3.12 -y
 ```
 
 ---
 
-## Environment Management Commands
+## 环境管理命令
 
-### Useful Conda Commands
+### 有用的 Conda 命令
 
 ```bash
-# List all environments
+# 列出所有环境
 conda env list
 
-# Activate environment
+# 激活环境
 conda activate ai-github-analyzer
 
-# Deactivate environment
+# 停用环境
 conda deactivate
 
-# Update packages
+# 更新包
 conda update --all
 
-# Export environment
+# 导出环境
 conda env export > environment.yml
 
-# Create from exported file
+# 从导出的文件创建
 conda env create -f environment.yml
 
-# Remove environment
+# 删除环境
 conda env remove -n ai-github-analyzer
 ```
 
-### Useful Pip Commands
+### 有用的 Pip 命令
 
 ```bash
-# List installed packages
+# 列出已安装的包
 pip list
 
-# Show outdated packages
+# 显示过时的包
 pip list --outdated
 
-# Update specific package
+# 更新特定包
 pip install --upgrade package_name
 
-# Uninstall package
+# 卸载包
 pip uninstall package_name
 
-# Show package info
+# 显示包信息
 pip show package_name
 ```
 
 ---
 
-## IDE Configuration
+## IDE 配置
 
 ### Visual Studio Code
 
-1. **Install Extensions**:
+1. **安装扩展**：
    - Python (Microsoft)
    - Pylance
    - Black Formatter
    - Ruff
 
-2. **Select Interpreter**:
-   - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
-   - Type "Python: Select Interpreter"
-   - Choose the conda environment: `ai-github-analyzer`
+2. **选择解释器**：
+   - 按 `Ctrl+Shift+P`（Mac 上为 `Cmd+Shift+P`）
+   - 输入 "Python: Select Interpreter"
+   - 选择 conda 环境：`ai-github-analyzer`
 
-3. **Configure Settings** (`.vscode/settings.json`):
+3. **配置设置**（`.vscode/settings.json`）：
    ```json
    {
      "python.defaultInterpreterPath": "${workspaceFolder}/.conda/envs/ai-github-analyzer/bin/python",
@@ -348,21 +348,21 @@ pip show package_name
 
 ### PyCharm
 
-1. **Add Conda Environment**:
-   - Go to `File → Settings → Project → Python Interpreter`
-   - Click gear icon → `Add`
-   - Select `Conda Environment` → `Existing Environment`
-   - Browse to: `<conda_path>/envs/ai-github-analyzer/bin/python`
+1. **添加 Conda 环境**：
+   - 转到 `File → Settings → Project → Python Interpreter`
+   - 点击齿轮图标 → `Add`
+   - 选择 `Conda Environment` → `Existing Environment`
+   - 浏览到：`<conda_path>/envs/ai-github-analyzer/bin/python`
 
-2. **Configure Test Runner**:
-   - Go to `File → Settings → Tools → Python Integrated Tools`
-   - Set `Default test runner` to `pytest`
+2. **配置测试运行器**：
+   - 转到 `File → Settings → Tools → Python Integrated Tools`
+   - 将 `Default test runner` 设置为 `pytest`
 
 ---
 
-## Docker Setup (Optional)
+## Docker 设置（可选）
 
-For containerized development:
+用于容器化开发：
 
 ```dockerfile
 # Dockerfile
@@ -379,7 +379,7 @@ COPY main.py .
 CMD ["python", "main.py"]
 ```
 
-Build and run:
+构建和运行：
 ```bash
 docker build -t ai-github-analyzer .
 docker run ai-github-analyzer analyze https://github.com/username/repo
@@ -387,9 +387,9 @@ docker run ai-github-analyzer analyze https://github.com/username/repo
 
 ---
 
-## Continuous Integration
+## 持续集成
 
-### GitHub Actions Example
+### GitHub Actions 示例
 
 ```yaml
 # .github/workflows/test.yml
@@ -425,55 +425,55 @@ jobs:
 
 ---
 
-## Performance Tips
+## 性能提示
 
-### Speed Up Conda
+### 加速 Conda
 
-Use `mamba` for faster dependency resolution:
+使用 `mamba` 进行更快的依赖解析：
 ```bash
 conda install mamba -n base -c conda-forge
 mamba create -n ai-github-analyzer python=3.12 -y
 ```
 
-### Virtual Environment Location
+### 虚拟环境位置
 
-By default, conda stores environments in:
+默认情况下，conda 将环境存储在：
 - **Windows**: `C:\Users\<User>\anaconda3\envs\`
 - **macOS/Linux**: `~/anaconda3/envs/`
 
-To change location:
+更改位置：
 ```bash
 conda config --add envs_dirs /path/to/custom/envs
 ```
 
 ---
 
-## Next Steps
+## 下一步
 
-After setting up the environment:
+设置环境后：
 
-1. ✅ Read the [README.md](README.md) for usage instructions
-2. ✅ Review the [ARCHITECTURE.md](ARCHITECTURE.md) for design overview
-3. ✅ Check [AGENTS.md](AGENTS.md) for agent specifications
-4. 📝 Start implementing modules according to architecture
-5. 🧪 Write tests as you develop
-6. 📊 Run the analyzer on sample repositories
-
----
-
-## Support
-
-If you encounter issues:
-
-1. Check the troubleshooting section above
-2. Review error messages carefully
-3. Search existing issues on GitHub
-4. Create a new issue with:
-   - Your OS and Python version
-   - Full error message
-   - Steps to reproduce
-   - Environment details (`conda list`)
+1. ✅ 阅读 [README.md](README.md) 了解使用说明
+2. ✅ 查看 [ARCHITECTURE.md](ARCHITECTURE.md) 了解设计概览
+3. ✅ 检查 [AGENTS.md](AGENTS.md) 了解代理规范
+4. 📝 根据架构开始实现模块
+5. 🧪 开发时编写测试
+6. 📊 在示例仓库上运行分析器
 
 ---
 
-*Last Updated: 2026-05-14*
+## 支持
+
+如果遇到问题：
+
+1. 检查上面的故障排除部分
+2. 仔细查看错误消息
+3. 在 GitHub 上搜索现有问题
+4. 创建新问题，包含：
+   - 您的操作系统和 Python 版本
+   - 完整错误消息
+   - 重现步骤
+   - 环境详细信息（`conda list`）
+
+---
+
+*最后更新：2026-05-14*

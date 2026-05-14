@@ -1,3 +1,3 @@
 """
-Classifier module - Classifies repository type, tech stack, and architecture patterns.
+分类器模块 - 分类仓库类型、技术栈和架构模式。
 """

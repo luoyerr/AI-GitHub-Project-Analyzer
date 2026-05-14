@@ -1,6 +1,6 @@
 """
-Base models for inter-module communication.
-All modules should use these models to exchange data.
+模块间通信的基础模型。
+所有模块应使用这些模型进行数据交换。
 """
 
 from pydantic import BaseModel, Field
@@ -10,7 +10,7 @@ from enum import Enum
 
 
 class AnalysisStatus(str, Enum):
-    """Analysis execution status."""
+    """分析执行状态。"""
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -18,7 +18,7 @@ class AnalysisStatus(str, Enum):
 
 
 class RepositoryInfo(BaseModel):
-    """Basic repository information."""
+    """仓库基本信息。"""
     url: str = ""
     name: str = "unknown"
     owner: str = "unknown"
@@ -30,7 +30,7 @@ class RepositoryInfo(BaseModel):
 
 
 class AnalysisConfig(BaseModel):
-    """Configuration for analysis execution."""
+    """分析执行的配置。"""
     repo_url: str
     output_format: str = "markdown"
     include_tests: bool = True
@@ -39,7 +39,7 @@ class AnalysisConfig(BaseModel):
 
 
 class AnalysisResult(BaseModel):
-    """Final analysis result structure."""
+    """最终分析结果结构。"""
     repo_info: RepositoryInfo
     status: AnalysisStatus = AnalysisStatus.PENDING
     summary: Optional[str] = None
@@ -51,7 +51,7 @@ class AnalysisResult(BaseModel):
 
 
 class ScanResult(BaseModel):
-    """Result from scanner module."""
+    """扫描器模块的结果。"""
     file_tree: Dict[str, Any] = {}
     total_files: int = 0
     total_lines: int = 0
@@ -60,7 +60,7 @@ class ScanResult(BaseModel):
 
 
 class ClassificationResult(BaseModel):
-    """Result from classifier module."""
+    """分类器模块的结果。"""
     repo_type: str = "unknown"
     primary_language: str = "unknown"
     frameworks: List[str] = []

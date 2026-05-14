@@ -1,3 +1,3 @@
 """
-Validators module - Validates analysis results and ensures data quality.
+验证器模块 - 验证分析结果并确保数据质量。
 """

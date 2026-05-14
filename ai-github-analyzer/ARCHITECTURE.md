@@ -1,400 +1,400 @@
-# Architecture Design Document
+# 架构设计文档
 
-## Overview
+## 概述
 
-AI GitHub Analyzer follows a **Clean Architecture** pattern with clear separation of concerns. The system is designed around a modular, event-driven workflow where each module has a single responsibility and communicates through well-defined Pydantic models.
+AI GitHub Analyzer 遵循**整洁架构**模式，具有清晰的关注点分离。系统围绕模块化、事件驱动的工作流设计，其中每个模块都有单一职责，并通过明确定义的 Pydantic 模型进行通信。
 
-## Architectural Principles
+## 架构原则
 
-1. **Separation of Concerns**: Each module handles one specific aspect of analysis
-2. **Dependency Rule**: Dependencies point inward toward core business logic
-3. **Model-Driven Communication**: All inter-module communication uses Pydantic models
-4. **Async-First Design**: Built on asyncio for concurrent operations
-5. **No Over-Engineering**: Lightweight, focused modules without unnecessary abstractions
+1. **关注点分离**：每个模块处理分析的一个特定方面
+2. **依赖规则**：依赖关系指向核心业务逻辑
+3. **模型驱动通信**：所有模块间通信使用 Pydantic 模型
+4. **异步优先设计**：基于 asyncio 构建并发操作
+5. **拒绝过度工程**：轻量级、专注的模块，没有不必要的抽象
 
-## System Architecture
+## 系统架构
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      CLI Layer (Typer)                       │
-│                    main.py - Entry Point                     │
+│                      CLI 层 (Typer)                          │
+│                    main.py - 入口点                          │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
-│                  Orchestrator Module                         │
-│           Coordinates the analysis workflow                 │
+│                  协调器模块                                   │
+│           协调整体分析工作流                                 │
 └──┬──────────┬──────────┬──────────┬──────────┬─────────────┘
    │          │          │          │          │
 ┌──▼───┐  ┌──▼────┐  ┌──▼──────┐  │          │
-│Scan  │  │Class  │  │Context  │  │          │
-│ner   │──▶ifier  │──▶Builder  │  │          │
+│扫描  │  │分类  │  │上下文  │  │          │
+│器    │──▶器    │──▶构建器  │  │          │
 └──────┘  └───────┘  └────┬────┘  │          │
                           │       │          │
                    ┌──────▼───────▼──┐      │
-                   │    Agents       │◀─────┘
-                   │  (Specialized)  │
+                   │    代理         │◀─────┘
+                   │  (专业化)       │
                    └──────┬──────────┘
                           │
                    ┌──────▼──────┐
-                   │ Validators  │
+                   │ 验证器      │
                    └──────┬──────┘
                           │
                    ┌──────▼──────┐
-                   │  Renderer   │
+                   │ 渲染器      │
                    └─────────────┘
 ```
 
-## Module Responsibilities
+## 模块职责
 
-### 1. Orchestrator (`src/orchestrator/`)
+### 1. 协调器 (`src/orchestrator/`)
 
-**Purpose**: Central coordinator that manages the analysis workflow lifecycle.
+**目的**：管理分析工作流生命周期的中央协调器。
 
-**Responsibilities**:
-- Initialize and configure the analysis pipeline
-- Execute modules in the correct sequence
-- Handle errors and retries
-- Manage async task coordination
-- Track overall progress
+**职责**：
+- 初始化和配置分析管道
+- 按正确顺序执行模块
+- 处理错误和重试
+- 管理异步任务协调
+- 跟踪整体进度
 
-**Key Interfaces**:
-- `AnalysisOrchestrator`: Main orchestrator class
-- Accepts `AnalysisConfig`, returns `AnalysisResult`
-
----
-
-### 2. Scanner (`src/scanner/`)
-
-**Purpose**: Extracts raw repository structure and metadata.
-
-**Responsibilities**:
-- Clone or access repository (local/remote)
-- Build file tree structure
-- Count files, lines, and directories
-- Detect programming languages
-- Extract dependency information (package.json, requirements.txt, etc.)
-- Identify configuration files
-
-**Output**: `ScanResult` model
-
-**Design Notes**:
-- Should support both local paths and GitHub URLs
-- Must handle large repositories efficiently
-- Ignore common non-code directories (node_modules, .git, etc.)
+**关键接口**：
+- `AnalysisOrchestrator`：主协调器类
+- 接受 `AnalysisConfig`，返回 `AnalysisResult`
 
 ---
 
-### 3. Classifier (`src/classifier/`)
+### 2. 扫描器 (`src/scanner/`)
 
-**Purpose**: Analyzes scanned data to identify technology stack and patterns.
+**目的**：提取原始仓库结构和元数据。
 
-**Responsibilities**:
-- Determine primary programming language
-- Detect frameworks and libraries
-- Identify architectural patterns (MVC, microservices, etc.)
-- Classify repository type (library, application, framework, etc.)
-- Calculate confidence scores for classifications
+**职责**：
+- 克隆或访问仓库（本地/远程）
+- 构建文件树结构
+- 统计文件、行数和目录
+- 检测编程语言
+- 提取依赖信息（package.json、requirements.txt 等）
+- 识别配置文件
 
-**Input**: `ScanResult`  
-**Output**: `ClassificationResult`
+**输出**：`ScanResult` 模型
 
-**Design Notes**:
-- Use heuristics and pattern matching
-- Consider file extensions, imports, and configurations
-- Support extensible classification rules
-
----
-
-### 4. Context Builder (`src/context_builder/`)
-
-**Purpose**: Aggregates and enriches data from scanner and classifier.
-
-**Responsibilities**:
-- Merge scan results with classification data
-- Build comprehensive repository context
-- Extract key files (README, documentation, configs)
-- Prepare context for AI agents
-- Create structured representation for analysis
-
-**Input**: `ScanResult`, `ClassificationResult`  
-**Output**: Enriched context object (Pydantic model)
-
-**Design Notes**:
-- Should create a unified view of the repository
-- Optimize context size for AI token limits
-- Preserve important structural information
+**设计说明**：
+- 应支持本地路径和 GitHub URL
+- 必须高效处理大型仓库
+- 忽略常见的非代码目录（node_modules、.git 等）
 
 ---
 
-### 5. Agents (`src/agents/`)
+### 3. 分类器 (`src/classifier/`)
 
-**Purpose**: Specialized AI agents that perform deep analysis tasks.
+**目的**：分析扫描数据以识别技术栈和模式。
 
-**Responsibilities**:
-- **Architecture Agent**: Analyze architectural decisions and patterns
-- **Quality Agent**: Assess code quality and best practices
-- **Security Agent**: Identify potential security issues
-- **Documentation Agent**: Evaluate documentation completeness
-- **Recommendation Agent**: Generate actionable improvements
+**职责**：
+- 确定主要编程语言
+- 检测框架和库
+- 识别架构模式（MVC、微服务等）
+- 分类仓库类型（库、应用程序、框架等）
+- 计算分类的置信度分数
 
-**Input**: Enriched context from Context Builder  
-**Output**: Agent-specific analysis results
+**输入**：`ScanResult`  
+**输出**：`ClassificationResult`
 
-**Design Notes**:
-- Each agent should be independent and focused
-- Support parallel execution where possible
-- Agents communicate results back to orchestrator
-- Use prompt templates from `prompts/` directory
-
----
-
-### 6. Validators (`src/validators/`)
-
-**Purpose**: Ensure analysis results meet quality standards.
-
-**Responsibilities**:
-- Validate completeness of analysis
-- Check for consistency across modules
-- Verify data integrity
-- Flag potential issues or uncertainties
-- Apply validation rules
-
-**Input**: Raw analysis results  
-**Output**: Validated results with quality metrics
-
-**Design Notes**:
-- Implement pluggable validation rules
-- Provide detailed validation reports
-- Support configurable strictness levels
+**设计说明**：
+- 使用启发式方法和模式匹配
+- 考虑文件扩展名、导入和配置
+- 支持可扩展的分类规则
 
 ---
 
-### 7. Renderer (`src/renderer/`)
+### 4. 上下文构建器 (`src/context_builder/`)
 
-**Purpose**: Format and present analysis results.
+**目的**：聚合并丰富来自扫描器和分类器的数据。
 
-**Responsibilities**:
-- Convert results to various formats (Markdown, JSON, HTML)
-- Apply formatting and styling
-- Generate visualizations if needed
-- Export to file or display in terminal
-- Support custom templates
+**职责**：
+- 合并扫描结果与分类数据
+- 构建全面的仓库上下文
+- 提取关键文件（README、文档、配置）
+- 为 AI 代理准备上下文
+- 创建用于分析的结构化表示
 
-**Input**: Validated `AnalysisResult`  
-**Output**: Formatted output in requested format
+**输入**：`ScanResult`、`ClassificationResult`  
+**输出**：丰富的上下文对象（Pydantic 模型）
 
-**Design Notes**:
-- Support multiple output formats
-- Rich terminal output using Rich library
-- Template-based rendering for flexibility
-
----
-
-### 8. Models (`src/models/`)
-
-**Purpose**: Define all data structures for inter-module communication.
-
-**Responsibilities**:
-- Define Pydantic models for all data types
-- Ensure type safety across modules
-- Provide validation at data boundaries
-- Document data contracts
-
-**Key Models**:
-- `AnalysisConfig`: Configuration parameters
-- `RepositoryInfo`: Repository metadata
-- `ScanResult`: Scanner output
-- `ClassificationResult`: Classifier output
-- `AnalysisResult`: Final analysis result
-
-**Design Notes**:
-- All models should be immutable where possible
-- Include comprehensive field descriptions
-- Use appropriate types and constraints
+**设计说明**：
+- 应创建仓库的统一视图
+- 优化上下文大小以适应 AI token 限制
+- 保留重要的结构信息
 
 ---
 
-### 9. Infrastructure (`src/infrastructure/`)
+### 5. 代理 (`src/agents/`)
 
-**Purpose**: Core infrastructure components supporting the application.
+**目的**：执行深度分析任务的专业化 AI 代理。
 
-**Responsibilities**:
-- Configuration management (pydantic-settings)
-- Logging setup (loguru)
-- Error handling utilities
-- Async helpers
-- External service clients (GitHub API, AI providers)
+**职责**：
+- **架构代理**：分析架构决策和模式
+- **质量代理**：评估代码质量和最佳实践
+- **安全代理**：识别潜在安全问题
+- **文档代理**：评估文档完整性
+- **建议代理**：生成可操作的改进建议
 
-**Design Notes**:
-- Keep infrastructure concerns separate from business logic
-- Support environment-based configuration
-- Provide reusable utilities
+**输入**：来自上下文构建器的丰富上下文  
+**输出**：代理特定的分析结果
 
----
-
-### 10. Utils (`src/utils/`)
-
-**Purpose**: General-purpose utility functions.
-
-**Responsibilities**:
-- File system operations
-- String manipulation
-- Date/time helpers
-- Common algorithms
-- Helper functions used across modules
-
-**Design Notes**:
-- Functions should be pure and stateless
-- No module-specific logic
-- Well-tested and documented
+**设计说明**：
+- 每个代理应独立且专注
+- 尽可能支持并行执行
+- 代理将结果返回给协调器
+- 使用 `prompts/` 目录中的提示模板
 
 ---
 
-## Data Flow
+### 6. 验证器 (`src/validators/`)
+
+**目的**：确保分析结果符合质量标准。
+
+**职责**：
+- 验证分析的完整性
+- 检查模块间的一致性
+- 验证数据完整性
+- 标记潜在问题或不确定性
+- 应用验证规则
+
+**输入**：原始分析结果  
+**输出**：带有质量指标的验证结果
+
+**设计说明**：
+- 实现可插拔的验证规则
+- 提供详细的验证报告
+- 支持可配置的严格级别
+
+---
+
+### 7. 渲染器 (`src/renderer/`)
+
+**目的**：格式化并展示分析结果。
+
+**职责**：
+- 将结果转换为各种格式（Markdown、JSON、HTML）
+- 应用格式化和样式
+- 生成可视化（如需要）
+- 导出到文件或显示在终端
+- 支持自定义模板
+
+**输入**：验证后的 `AnalysisResult`  
+**输出**：请求格式的格式化输出
+
+**设计说明**：
+- 支持多种输出格式
+- 使用 Rich 库实现丰富的终端输出
+- 基于模板的渲染以提高灵活性
+
+---
+
+### 8. 模型 (`src/models/`)
+
+**目的**：定义模块间通信的所有数据结构。
+
+**职责**：
+- 为所有数据类型定义 Pydantic 模型
+- 确保模块间的类型安全
+- 在数据边界提供验证
+- 记录数据契约
+
+**关键模型**：
+- `AnalysisConfig`：配置参数
+- `RepositoryInfo`：仓库元数据
+- `ScanResult`：扫描器输出
+- `ClassificationResult`：分类器输出
+- `AnalysisResult`：最终分析结果
+
+**设计说明**：
+- 所有模型应尽可能不可变
+- 包含全面的字段描述
+- 使用适当的类型和约束
+
+---
+
+### 9. 基础设施 (`src/infrastructure/`)
+
+**目的**：支持应用程序的核心基础设施组件。
+
+**职责**：
+- 配置管理（pydantic-settings）
+- 日志设置（loguru）
+- 错误处理工具
+- 异步辅助工具
+- 外部服务客户端（GitHub API、AI 提供商）
+
+**设计说明**：
+- 将基础设施关注点与业务逻辑分离
+- 支持基于环境的配置
+- 提供可重用的工具
+
+---
+
+### 10. 工具 (`src/utils/`)
+
+**目的**：通用实用函数。
+
+**职责**：
+- 文件系统操作
+- 字符串操作
+- 日期/时间辅助工具
+- 常用算法
+- 跨模块使用的辅助函数
+
+**设计说明**：
+- 函数应该是纯函数且无状态
+- 没有模块特定逻辑
+- 经过充分测试和文档化
+
+---
+
+## 数据流
 
 ```
-1. User Input (CLI)
+1. 用户输入 (CLI)
    ↓
-2. AnalysisConfig created
+2. 创建 AnalysisConfig
    ↓
-3. Orchestrator initializes workflow
+3. 协调器初始化工作流
    ↓
-4. Scanner → ScanResult
+4. 扫描器 → ScanResult
    ↓
-5. Classifier → ClassificationResult
+5. 分类器 → ClassificationResult
    ↓
-6. Context Builder → Enriched Context
+6. 上下文构建器 → 丰富的上下文
    ↓
-7. Agents → Agent Results (parallel)
+7. 代理 → 代理结果 (并行)
    ↓
-8. Validators → Validated Results
+8. 验证器 → 验证结果
    ↓
-9. Renderer → Formatted Output
+9. 渲染器 → 格式化输出
    ↓
-10. Display to User
+10. 展示给用户
 ```
 
-## Technology Stack Rationale
+## 技术栈选择理由
 
 ### Python 3.12+
-- Latest performance improvements
-- Better type hints and error messages
-- Modern async/await syntax
+- 最新的性能改进
+- 更好的类型提示和错误消息
+- 现代 async/await 语法
 
 ### Typer
-- Type-safe CLI framework
-- Automatic help generation
-- Easy command definition
-- Built on Pydantic
+- 类型安全的 CLI 框架
+- 自动生成帮助
+- 简单的命令定义
+- 基于 Pydantic 构建
 
 ### Rich
-- Beautiful terminal output
-- Progress bars and spinners
-- Tables, panels, and formatting
-- Color and styling support
+- 精美的终端输出
+- 进度条和旋转器
+- 表格、面板和格式化
+- 颜色和样式支持
 
 ### Loguru
-- Zero-config logging
-- Structured log output
-- Easy rotation and retention
-- Exception handling
+- 零配置日志
+- 结构化日志输出
+- 简单的轮换和保留
+- 异常处理
 
 ### Pydantic
-- Runtime data validation
-- Type safety
-- Clean model definitions
-- Settings management
+- 运行时数据验证
+- 类型安全
+- 清晰的模型定义
+- 设置管理
 
 ### asyncio
-- Concurrent execution
-- Efficient I/O operations
-- Parallel agent execution
-- Non-blocking operations
+- 并发执行
+- 高效的 I/O 操作
+- 并行代理执行
+- 非阻塞操作
 
-## Directory Structure Rationale
+## 目录结构选择理由
 
-### `src/` Layout
-- Prevents import conflicts during development
-- Clear separation between source and tests
-- Standard Python packaging practice
-- Easier testing with isolated imports
+### `src/` 布局
+- 防止开发期间的导入冲突
+- 源代码和测试之间的清晰分离
+- 标准的 Python 打包实践
+- 使用隔离导入更容易测试
 
 ### `prompts/`
-- Separate AI prompt templates from code
-- Easy to version and modify prompts
-- Support prompt engineering workflows
+- 将 AI 提示模板与代码分离
+- 易于版本控制和修改提示
+- 支持提示工程工作流
 
 ### `schemas/`
-- JSON schemas for external integrations
-- API contract definitions
-- Validation schemas
+- 用于外部集成的 JSON 模式
+- API 契约定义
+- 验证模式
 
 ### `traces/`
-- Store execution traces for debugging
-- Performance profiling data
-- Agent interaction logs
+- 存储执行追踪以进行调试
+- 性能分析数据
+- 代理交互日志
 
 ### `tests/`
-- Comprehensive test suite
-- Mirror src/ structure
-- Unit, integration, and E2E tests
+- 全面的测试套件
+- 镜像 src/ 结构
+- 单元测试、集成测试和端到端测试
 
 ### `docs/design-docs/`
-- Detailed design documents
-- RFCs and proposals
-- Architecture decision records (ADRs)
+- 详细的设计文档
+- RFC 和提案
+- 架构决策记录 (ADR)
 
-## Extension Points
+## 扩展点
 
-The architecture supports easy extension:
+架构支持轻松扩展：
 
-1. **New Agents**: Add agent classes in `src/agents/`
-2. **New Validators**: Implement validation rules in `src/validators/`
-3. **New Renderers**: Add output formats in `src/renderer/`
-4. **Custom Classifiers**: Extend classification logic in `src/classifier/`
-5. **Prompt Templates**: Add/modify prompts in `prompts/`
+1. **新代理**：在 `src/agents/` 中添加代理类
+2. **新验证器**：在 `src/validators/` 中实现验证规则
+3. **新渲染器**：在 `src/renderer/` 中添加输出格式
+4. **自定义分类器**：在 `src/classifier/` 中扩展分类逻辑
+5. **提示模板**：在 `prompts/` 中添加/修改提示
 
-## Error Handling Strategy
+## 错误处理策略
 
-- Each module handles its own errors
-- Orchestrator catches and aggregates errors
-- Graceful degradation when optional modules fail
-- Detailed error messages with context
-- Logging at appropriate levels
+- 每个模块处理自己的错误
+- 协调器捕获并聚合错误
+- 可选模块失败时优雅降级
+- 带有上下文的详细错误消息
+- 在适当级别记录日志
 
-## Performance Considerations
+## 性能考虑
 
-- Async I/O for network operations
-- Parallel agent execution where possible
-- Caching of expensive operations
-- Lazy loading of large datasets
-- Token optimization for AI calls
+- 网络操作的异步 I/O
+- 尽可能并行执行代理
+- 缓存昂贵的操作
+- 懒加载大型数据集
+- AI 调用的 token 优化
 
-## Security Considerations
+## 安全考虑
 
-- Never execute arbitrary code from repositories
-- Sanitize all inputs
-- Rate limit external API calls
-- Secure storage of API keys
-- Validate repository URLs
+- 绝不执行仓库中的任意代码
+- 清理所有输入
+- 限制外部 API 调用速率
+- 安全存储 API 密钥
+- 验证仓库 URL
 
-## Testing Strategy
+## 测试策略
 
-- **Unit Tests**: Each module independently tested
-- **Integration Tests**: Module interactions
-- **E2E Tests**: Full workflow execution
-- **Mock External Services**: GitHub API, AI providers
-- **Fixture Repositories**: Test against known repos
+- **单元测试**：每个模块独立测试
+- **集成测试**：模块交互
+- **端到端测试**：完整工作流执行
+- **模拟外部服务**：GitHub API、AI 提供商
+- **固定仓库**：针对已知仓库进行测试
 
-## Future Enhancements
+## 未来增强
 
-- Plugin system for custom agents
-- Web UI interface
-- Database for storing analysis history
-- Comparison between repository versions
-- Integration with CI/CD pipelines
-- Custom rule engine for validators
+- 自定义代理的插件系统
+- Web UI 界面
+- 存储分析历史的数据库
+- 仓库版本之间的比较
+- 与 CI/CD 管道集成
+- 验证器的自定义规则引擎
 
 ---
 
-*Last Updated: 2026-05-14*
+*最后更新：2026-05-14*

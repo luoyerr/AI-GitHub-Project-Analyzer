@@ -1,3 +1,3 @@
 """
-Renderer module - Renders analysis results in various formats.
+渲染器模块 - 以各种格式渲染分析结果。
 """

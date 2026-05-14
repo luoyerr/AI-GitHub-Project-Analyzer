@@ -2,177 +2,177 @@
 
 <div align="center">
 
-**Enterprise-grade AI-powered GitHub repository analyzer with multi-agent orchestration**
+**企业级 AI 驱动的 GitHub 仓库分析器，支持多代理协调**
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
 
-## 🚀 Overview
+## 🚀 概述
 
-AI GitHub Analyzer is a sophisticated tool that leverages AI agents to perform comprehensive analysis of GitHub repositories. It automatically detects technology stacks, identifies architecture patterns, assesses code quality, and provides actionable recommendations.
+AI GitHub Analyzer 是一款精密的工具，利用 AI 代理对 GitHub 仓库进行全面分析。它能自动检测技术栈、识别架构模式、评估代码质量，并提供可操作的建议。
 
-## ✨ Features
+## ✨ 特性
 
-- **Multi-Agent Orchestration**: Coordinated AI agents for specialized analysis tasks
-- **Technology Stack Detection**: Automatic identification of frameworks, libraries, and tools
-- **Architecture Pattern Recognition**: Detects common architectural patterns and design principles
-- **Code Quality Assessment**: Evaluates code structure, maintainability, and best practices
-- **Rich CLI Interface**: Beautiful terminal output with progress indicators
-- **Structured Logging**: Comprehensive logging with loguru for debugging and tracing
-- **Extensible Architecture**: Modular design for easy customization and extension
+- **多代理协调**：协调的 AI 代理执行专门的分析任务
+- **技术栈检测**：自动识别框架、库和工具
+- **架构模式识别**：检测常见的架构模式和设计原则
+- **代码质量评估**：评估代码结构、可维护性和最佳实践
+- **丰富的 CLI 界面**：带有进度指示器的精美终端输出
+- **结构化日志**：使用 loguru 进行全面的日志记录，便于调试和追踪
+- **可扩展架构**：模块化设计，易于定制和扩展
 
-## 📋 Prerequisites
+## 📋 前置要求
 
-- Python 3.12 or higher
-- Anaconda (recommended for environment management)
+- Python 3.12 或更高版本
+- Anaconda（推荐用于环境管理）
 - Git
 
-## 🛠️ Installation
+## 🛠️ 安装方式
 
-### Using Anaconda (Recommended)
+### 使用 Anaconda（推荐）
 
 ```bash
-# Clone the repository
+# 克隆仓库
 git clone <repository-url>
 cd ai-github-analyzer
 
-# Create conda environment
+# 创建 conda 环境
 conda create -n ai-github-analyzer python=3.12 -y
 
-# Activate environment
+# 激活环境
 conda activate ai-github-analyzer
 
-# Install in development mode
+# 以开发模式安装
 pip install -e .
 
-# Install development dependencies (optional)
+# 安装开发依赖（可选）
 pip install -e ".[dev]"
 ```
 
-### Using pip only
+### 仅使用 pip
 
 ```bash
-# Create virtual environment
+# 创建虚拟环境
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install package
+# 安装包
 pip install -e .
 ```
 
-## 💻 Usage
+## 💻 使用方法
 
-### Basic Analysis
+### 基本分析
 
 ```bash
-# Analyze a GitHub repository
+# 分析 GitHub 仓库
 python main.py analyze https://github.com/username/repository
 
-# Analyze a local repository
+# 分析本地仓库
 python main.py analyze /path/to/local/repo
 
-# Specify output format
+# 指定输出格式
 python main.py analyze https://github.com/username/repository --format json
 
-# Enable verbose output
+# 启用详细输出
 python main.py analyze https://github.com/username/repository --verbose
 ```
 
-### Available Commands
+### 可用命令
 
 ```bash
-# Show help
+# 显示帮助
 python main.py --help
 
-# Analyze command help
+# 分析命令帮助
 python main.py analyze --help
 
-# Show version
+# 显示版本
 python main.py version
 ```
 
-## 🏗️ Project Structure
+## 🏗️ 项目结构
 
 ```
 ai-github-analyzer/
-├── src/                      # Source code (src layout)
-│   ├── orchestrator/         # Workflow coordination
-│   ├── scanner/              # Repository scanning
-│   ├── classifier/           # Tech stack classification
-│   ├── context_builder/      # Context aggregation
-│   ├── agents/               # AI agent implementations
-│   ├── validators/           # Result validation
-│   ├── renderer/             # Output rendering
-│   ├── models/               # Pydantic data models
-│   ├── infrastructure/       # Core infrastructure
-│   └── utils/                # Utility functions
-├── prompts/                  # AI prompt templates
-├── schemas/                  # JSON schemas
-├── traces/                   # Execution traces
-├── tests/                    # Test suite
-├── docs/                     # Documentation
-│   └── design-docs/          # Design documents
-├── main.py                   # CLI entry point
-├── pyproject.toml            # Project configuration
-└── README.md                 # This file
+├── src/                      # 源代码（src 布局）
+│   ├── orchestrator/         # 工作流协调
+│   ├── scanner/              # 仓库扫描
+│   ├── classifier/           # 技术栈分类
+│   ├── context_builder/      # 上下文聚合
+│   ├── agents/               # AI 代理实现
+│   ├── validators/           # 结果验证
+│   ├── renderer/             # 输出渲染
+│   ├── models/               # Pydantic 数据模型
+│   ├── infrastructure/       # 核心基础设施
+│   └── utils/                # 实用函数
+├── prompts/                  # AI 提示模板
+├── schemas/                  # JSON 模式
+├── traces/                   # 执行追踪
+├── tests/                    # 测试套件
+├── docs/                     # 文档
+│   └── design-docs/          # 设计文档
+├── main.py                   # CLI 入口点
+├── pyproject.toml            # 项目配置
+└── README.md                 # 本文件
 ```
 
-## 🔧 Development
+## 🔧 开发
 
-### Running Tests
+### 运行测试
 
 ```bash
 pytest tests/ -v
 ```
 
-### Code Formatting
+### 代码格式化
 
 ```bash
-# Format code with black
+# 使用 black 格式化代码
 black src/ main.py
 
-# Lint with ruff
+# 使用 ruff 进行代码检查
 ruff check src/ main.py
 
-# Type checking with mypy
+# 使用 mypy 进行类型检查
 mypy src/
 ```
 
-## 📖 Documentation
+## 📖 文档
 
-- [Architecture Design](ARCHITECTURE.md)
-- [Agent Specifications](AGENTS.md)
-- [Design Documents](docs/design-docs/)
+- [架构设计](ARCHITECTURE.md)
+- [代理规范](AGENTS.md)
+- [设计文档](docs/design-docs/)
 
-## 🤝 Contributing
+## 🤝 贡献
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+欢迎贡献！请随时提交 Pull Request。
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Fork 仓库
+2. 创建功能分支（`git checkout -b feature/amazing-feature`）
+3. 提交更改（`git commit -m 'Add amazing feature'`）
+4. 推送到分支（`git push origin feature/amazing-feature`）
+5. 打开 Pull Request
 
-## 📄 License
+## 📄 许可证
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+本项目采用 MIT 许可证 - 详见 LICENSE 文件。
 
-## 👥 Authors
+## 👥 作者
 
-- Your Name - Initial work
+- Your Name - 初始工作
 
-## 🙏 Acknowledgments
+## 🙏 致谢
 
-- Built with [Typer](https://typer.tiangolo.com/) for CLI
-- Styled with [Rich](https://rich.readthedocs.io/) for beautiful terminal output
-- Logged with [Loguru](https://loguru.readthedocs.io/) for structured logging
-- Validated with [Pydantic](https://docs.pydantic.dev/) for data modeling
+- 使用 [Typer](https://typer.tiangolo.com/) 构建 CLI
+- 使用 [Rich](https://rich.readthedocs.io/) 美化终端输出
+- 使用 [Loguru](https://loguru.readthedocs.io/) 进行结构化日志记录
+- 使用 [Pydantic](https://docs.pydantic.dev/) 进行数据建模
 
 ---
 
 <div align="center">
-Made with ❤️ for the developer community
+为开发者社区用心打造 ❤️
 </div>

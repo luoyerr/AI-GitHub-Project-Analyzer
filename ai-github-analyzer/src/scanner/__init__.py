@@ -1,3 +1,3 @@
 """
-Scanner module - Scans and extracts repository structure and metadata.
+扫描器模块 - 扫描并提取仓库结构和元数据。
 """

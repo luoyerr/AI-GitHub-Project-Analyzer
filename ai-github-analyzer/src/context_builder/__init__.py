@@ -1,3 +1,3 @@
 """
-Context Builder module - Builds comprehensive context from scanned data.
+上下文构建器模块 - 从扫描数据构建综合上下文。
 """

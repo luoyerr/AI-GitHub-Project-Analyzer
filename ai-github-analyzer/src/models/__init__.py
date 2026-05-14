@@ -1,3 +1,3 @@
 """
-Models module - Pydantic data models for inter-module communication.
+模型模块 - 用于模块间通信的 Pydantic 数据模型。
 """

@@ -1,3 +1,3 @@
 """
-Agents module - AI agent implementations for specialized analysis tasks.
+代理模块 - 用于专门分析任务的 AI 代理实现。
 """

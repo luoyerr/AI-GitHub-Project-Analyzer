@@ -1,3 +1,3 @@
 """
-Utils module - Utility functions and helpers.
+工具模块 - 实用函数和辅助工具。
 """

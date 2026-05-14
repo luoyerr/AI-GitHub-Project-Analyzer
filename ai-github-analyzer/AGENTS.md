@@ -1,44 +1,44 @@
-# Agent Specifications
+# 代理规范
 
-## Overview
+## 概述
 
-This document defines the AI agent specifications for the AI GitHub Analyzer. Each agent is responsible for a specialized analysis task and operates independently within the orchestration framework.
+本文档定义了 AI GitHub Analyzer 的 AI 代理规范。每个代理负责一个专门的分析任务，并在协调框架内独立运行。
 
-## Agent Architecture
+## 代理架构
 
-All agents follow a common interface:
+所有代理遵循通用接口：
 
 ```python
 class BaseAgent:
     def analyze(self, context: AnalysisContext) -> AgentResult:
-        """Perform analysis and return results."""
+        """执行分析并返回结果。"""
         pass
     
     def validate_input(self, context: AnalysisContext) -> bool:
-        """Validate that input context is sufficient."""
+        """验证输入上下文是否充分。"""
         pass
 ```
 
-## Agent Types
+## 代理类型
 
-### 1. Architecture Agent
+### 1. 架构代理
 
-**Purpose**: Analyze repository architecture and design patterns.
+**目的**：分析仓库架构和设计模式。
 
-**Responsibilities**:
-- Identify architectural style (monolith, microservices, layered, etc.)
-- Detect design patterns (MVC, MVVM, Repository, Factory, etc.)
-- Assess module organization and boundaries
-- Evaluate separation of concerns
-- Identify coupling and cohesion issues
+**职责**：
+- 识别架构风格（单体、微服务、分层等）
+- 检测设计模式（MVC、MVVM、Repository、Factory 等）
+- 评估模块组织和边界
+- 评估关注点分离
+- 识别耦合和 cohesion 问题
 
-**Input Context**:
-- File structure and organization
-- Module dependencies
-- Configuration files
-- Entry points and main modules
+**输入上下文**：
+- 文件结构和组织
+- 模块依赖关系
+- 配置文件
+- 入口点和主模块
 
-**Output**:
+**输出**：
 ```python
 class ArchitectureAnalysis(AgentResult):
     architectural_style: str
@@ -49,33 +49,33 @@ class ArchitectureAnalysis(AgentResult):
     recommendations: List[str]
 ```
 
-**Prompt Strategy**:
-- Analyze directory structure for architectural clues
-- Examine import patterns and dependencies
-- Review configuration files for framework hints
-- Assess code organization principles
+**提示策略**：
+- 分析目录结构以获取架构线索
+- 检查导入模式和依赖关系
+- 审查配置文件以获取框架提示
+- 评估代码组织原则
 
 ---
 
-### 2. Quality Agent
+### 2. 质量代理
 
-**Purpose**: Assess code quality and adherence to best practices.
+**目的**：评估代码质量和对最佳实践的遵守情况。
 
-**Responsibilities**:
-- Evaluate code complexity (cyclomatic, cognitive)
-- Check naming conventions consistency
-- Assess documentation coverage
-- Identify code smells and anti-patterns
-- Evaluate test coverage and quality
-- Check error handling practices
+**职责**：
+- 评估代码复杂度（圈复杂度、认知复杂度）
+- 检查命名约定一致性
+- 评估文档覆盖率
+- 识别代码异味和反模式
+- 评估测试覆盖率和质量
+- 检查错误处理实践
 
-**Input Context**:
-- Source code files
-- Test files and structure
-- Documentation files
-- Linting configurations
+**输入上下文**：
+- 源代码文件
+- 测试文件和结构
+- 文档文件
+- Lint 配置
 
-**Output**:
+**输出**：
 ```python
 class QualityAnalysis(AgentResult):
     overall_score: float
@@ -87,34 +87,34 @@ class QualityAnalysis(AgentResult):
     improvement_suggestions: List[str]
 ```
 
-**Prompt Strategy**:
-- Sample representative files from different modules
-- Analyze function and class complexity
-- Review comment-to-code ratios
-- Check for common anti-patterns
-- Evaluate error handling strategies
+**提示策略**：
+- 从不同模块采样代表性文件
+- 分析函数和类的复杂度
+- 审查注释与代码的比例
+- 检查常见反模式
+- 评估错误处理策略
 
 ---
 
-### 3. Security Agent
+### 3. 安全代理
 
-**Purpose**: Identify potential security vulnerabilities and risks.
+**目的**：识别潜在的安全漏洞和风险。
 
-**Responsibilities**:
-- Detect hardcoded secrets and credentials
-- Identify insecure dependencies
-- Check for common vulnerability patterns
-- Assess input validation practices
-- Review authentication/authorization implementation
-- Flag dangerous operations (eval, exec, etc.)
+**职责**：
+- 检测硬编码的秘密和凭据
+- 识别不安全的依赖
+- 检查常见漏洞模式
+- 评估输入验证实践
+- 审查身份验证/授权实现
+- 标记危险操作（eval、exec 等）
 
-**Input Context**:
-- Dependency files (requirements.txt, package.json, etc.)
-- Configuration files
-- Authentication-related code
-- API endpoint implementations
+**输入上下文**：
+- 依赖文件（requirements.txt、package.json 等）
+- 配置文件
+- 身份验证相关代码
+- API 端点实现
 
-**Output**:
+**输出**：
 ```python
 class SecurityAnalysis(AgentResult):
     risk_level: RiskLevel  # LOW, MEDIUM, HIGH, CRITICAL
@@ -124,34 +124,34 @@ class SecurityAnalysis(AgentResult):
     compliance_issues: List[str]
 ```
 
-**Prompt Strategy**:
-- Scan for known vulnerability patterns
-- Review dependency versions against CVE databases
-- Check for secure coding practices
-- Analyze authentication flows
-- Inspect data handling and sanitization
+**提示策略**：
+- 扫描已知漏洞模式
+- 根据 CVE 数据库审查依赖版本
+- 检查安全编码实践
+- 分析身份验证流程
+- 检查数据处理和清理
 
 ---
 
-### 4. Documentation Agent
+### 4. 文档代理
 
-**Purpose**: Evaluate documentation completeness and quality.
+**目的**：评估文档完整性和质量。
 
-**Responsibilities**:
-- Assess README quality and completeness
-- Check API documentation coverage
-- Evaluate inline code comments
-- Review documentation structure
-- Identify missing documentation areas
-- Check for outdated documentation
+**职责**：
+- 评估 README 质量和完整性
+- 检查 API 文档覆盖率
+- 评估内联代码注释
+- 审查文档结构
+- 识别缺失的文档区域
+- 检查过时的文档
 
-**Input Context**:
-- README.md and other markdown files
-- Docstrings and inline comments
-- API specification files (OpenAPI, GraphQL schema)
-- Documentation directories
+**输入上下文**：
+- README.md 和其他 Markdown 文件
+- Docstring 和内联注释
+- API 规范文件（OpenAPI、GraphQL schema）
+- 文档目录
 
-**Output**:
+**输出**：
 ```python
 class DocumentationAnalysis(AgentResult):
     completeness_score: float
@@ -163,34 +163,34 @@ class DocumentationAnalysis(AgentResult):
     improvement_priorities: List[str]
 ```
 
-**Prompt Strategy**:
-- Evaluate README against best practices checklist
-- Check for getting started guides
-- Assess API documentation completeness
-- Review code examples and tutorials
-- Identify gaps in documentation coverage
+**提示策略**：
+- 根据最佳实践清单评估 README
+- 检查入门指南
+- 评估 API 文档完整性
+- 审查代码示例和教程
+- 识别文档覆盖率的空白
 
 ---
 
-### 5. Recommendation Agent
+### 5. 建议代理
 
-**Purpose**: Generate actionable improvement recommendations.
+**目的**：生成可操作的改进建议。
 
-**Responsibilities**:
-- Synthesize findings from all other agents
-- Prioritize recommendations by impact
-- Provide specific, actionable steps
-- Suggest tools and resources
-- Create improvement roadmap
-- Estimate effort for each recommendation
+**职责**：
+- 综合所有其他代理的发现
+- 按影响优先级排序建议
+- 提供具体、可操作的步骤
+- 建议工具和资源
+- 创建改进路线图
+- 估算每个建议的工作量
 
-**Input Context**:
-- Results from all other agents
-- Repository goals (if specified)
-- Industry best practices
-- Similar repository patterns
+**输入上下文**：
+- 所有其他代理的结果
+- 仓库目标（如果指定）
+- 行业最佳实践
+- 类似仓库模式
 
-**Output**:
+**输出**：
 ```python
 class RecommendationAnalysis(AgentResult):
     quick_wins: List[Recommendation]
@@ -201,34 +201,34 @@ class RecommendationAnalysis(AgentResult):
     resource_links: List[str]
 ```
 
-**Prompt Strategy**:
-- Aggregate insights from all analyses
-- Apply prioritization frameworks (impact vs. effort)
-- Reference industry standards and benchmarks
-- Provide concrete examples and resources
-- Consider repository context and goals
+**提示策略**：
+- 聚合所有分析的见解
+- 应用优先级框架（影响 vs. 工作量）
+- 参考行业标准和基准
+- 提供具体示例和资源
+- 考虑仓库上下文和目标
 
 ---
 
-### 6. Dependency Agent
+### 6. 依赖代理
 
-**Purpose**: Analyze project dependencies and their health.
+**目的**：分析项目依赖及其健康状况。
 
-**Responsibilities**:
-- Map complete dependency tree
-- Identify outdated packages
-- Detect unused dependencies
-- Assess dependency health (maintenance, community)
-- Check for license compatibility
-- Identify dependency conflicts
+**职责**：
+- 映射完整的依赖树
+- 识别过时的包
+- 检测未使用的依赖
+- 评估依赖健康状况（维护、社区）
+- 检查许可证兼容性
+- 识别依赖冲突
 
-**Input Context**:
-- Dependency manifest files
-- Lock files (if available)
-- Import statements
-- Package metadata
+**输入上下文**：
+- 依赖清单文件
+- 锁定文件（如果可用）
+- 导入语句
+- 包元数据
 
-**Output**:
+**输出**：
 ```python
 class DependencyAnalysis(AgentResult):
     total_dependencies: int
@@ -241,35 +241,35 @@ class DependencyAnalysis(AgentResult):
     update_recommendations: List[str]
 ```
 
-**Prompt Strategy**:
-- Parse dependency files accurately
-- Cross-reference with package registries
-- Check last update dates and maintenance activity
-- Analyze download statistics and community adoption
-- Review license compatibility
+**提示策略**：
+- 准确解析依赖文件
+- 与包注册表交叉引用
+- 检查最后更新日期和维护活动
+- 分析下载统计数据和社区采用情况
+- 审查许可证兼容性
 
 ---
 
-### 7. Performance Agent
+### 7. 性能代理
 
-**Purpose**: Identify performance bottlenecks and optimization opportunities.
+**目的**：识别性能瓶颈和优化机会。
 
-**Responsibilities**:
-- Detect inefficient algorithms
-- Identify N+1 query patterns
-- Check for proper caching strategies
-- Assess database query efficiency
-- Review async/concurrent code usage
-- Flag memory-intensive operations
+**职责**：
+- 检测低效算法
+- 识别 N+1 查询模式
+- 检查适当的缓存策略
+- 评估数据库查询效率
+- 审查异步/并发代码使用
+- 标记内存密集型操作
 
-**Input Context**:
-- Database interaction code
-- API endpoint implementations
-- Loop and iteration patterns
-- Caching configurations
-- Async/await usage
+**输入上下文**：
+- 数据库交互代码
+- API 端点实现
+- 循环和迭代模式
+- 缓存配置
+- async/await 使用
 
-**Output**:
+**输出**：
 ```python
 class PerformanceAnalysis(AgentResult):
     bottlenecks: List[PerformanceIssue]
@@ -279,120 +279,120 @@ class PerformanceAnalysis(AgentResult):
     database_optimization_tips: List[str]
 ```
 
-**Prompt Strategy**:
-- Analyze algorithmic complexity indicators
-- Review database access patterns
-- Check for proper async usage
-- Identify redundant computations
-- Assess resource utilization patterns
+**提示策略**：
+- 分析算法复杂度指标
+- 审查数据库访问模式
+- 检查正确的 async 使用
+- 识别冗余计算
+- 评估资源利用模式
 
 ---
 
-## Agent Execution Model
+## 代理执行模型
 
-### Sequential vs Parallel
+### 顺序执行 vs 并行执行
 
-**Sequential Execution** (dependencies exist):
+**顺序执行**（存在依赖关系时）：
 ```
-Scanner → Classifier → Context Builder → Agents
-```
-
-**Parallel Execution** (independent agents):
-```
-Architecture Agent ──┐
-Quality Agent    ────┼→ Aggregator
-Security Agent   ────┤
-Documentation Agent ─┘
+扫描器 → 分类器 → 上下文构建器 → 代理
 ```
 
-### Timeout Handling
+**并行执行**（独立代理）：
+```
+架构代理 ──┐
+质量代理   ────┼→ 聚合器
+安全代理   ────┤
+文档代理 ──┘
+```
 
-Each agent has a configurable timeout:
+### 超时处理
+
+每个代理具有可配置的超时：
 ```python
 config = AgentConfig(
-    timeout=60,  # seconds
+    timeout=60,  # 秒
     retry_count=2,
     fallback_result=FallbackResult(...)
 )
 ```
 
-### Error Recovery
+### 错误恢复
 
-If an agent fails:
-1. Log detailed error information
-2. Attempt retry (if configured)
-3. Use fallback/default result
-4. Continue with remaining agents
-5. Report partial results with warnings
+如果代理失败：
+1. 记录详细的错误信息
+2. 尝试重试（如果配置）
+3. 使用回退/默认结果
+4. 继续执行剩余代理
+5. 报告部分结果并附带警告
 
 ---
 
-## Prompt Engineering Guidelines
+## 提示工程指南
 
-### Prompt Structure
+### 提示结构
 
-Each agent prompt should include:
+每个代理提示应包括：
 
-1. **Role Definition**: Clear agent persona and expertise
-2. **Task Description**: Specific analysis objectives
-3. **Input Format**: Expected data structure
-4. **Output Format**: Required response structure
-5. **Examples**: Sample inputs and outputs
-6. **Constraints**: Limitations and boundaries
-7. **Evaluation Criteria**: How to assess quality
+1. **角色定义**：清晰的代理人格和专业领域
+2. **任务描述**：具体的分析目标
+3. **输入格式**：预期的数据结构
+4. **输出格式**：所需的响应结构
+5. **示例**：输入和输出示例
+6. **约束**：限制和边界
+7. **评估标准**：如何评估质量
 
-### Example Prompt Template
+### 示例提示模板
 
 ```markdown
-# Role
-You are an expert software architect specializing in {domain}.
+# 角色
+您是专注于 {domain} 的专家软件架构师。
 
-# Task
-Analyze the provided repository context and identify {specific_aspects}.
+# 任务
+分析提供的仓库上下文并识别 {specific_aspects}。
 
-# Input
-Repository context includes:
-- File structure: {file_tree}
-- Key files: {file_contents}
-- Metadata: {metadata}
+# 输入
+仓库上下文包括：
+- 文件结构：{file_tree}
+- 关键文件：{file_contents}
+- 元数据：{metadata}
 
-# Output Format
-Provide your analysis in the following JSON structure:
+# 输出格式
+请按以下 JSON 结构提供您的分析：
 {
   "findings": [...],
   "score": 0.0,
   "recommendations": [...]
 }
 
-# Constraints
-- Focus only on {scope}
-- Do not make assumptions beyond provided data
-- Be specific and actionable
+# 约束
+- 仅关注 {scope}
+- 不要超出提供的数据做出假设
+- 保持具体和可操作
 
-# Examples
-Example 1:
-Input: ...
-Output: ...
+# 示例
+示例 1：
+输入：...
+输出：...
 ```
 
 ---
 
-## Agent Configuration
+## 代理配置
 
-### Environment Variables
+### 环境变量
 
 ```bash
-# AI Provider Configuration
-AI_PROVIDER=openai  # or anthropic, azure, etc.
+# AI 提供商配置
+AI_PROVIDER=openai  # 或 anthropic, azure 等
 AI_MODEL=gpt-4-turbo
 AI_API_KEY=your_api_key
 
-# Agent-Specific Settings
+# 代理特定设置
 AGENT_TIMEOUT=60
 AGENT_MAX_RETRIES=2
 AGENT_PARALLEL_LIMIT=4
 
-# Feature Flags
+# 功能标志
 ENABLE_ARCHITECTURE_AGENT=true
 ENABLE_QUALITY_AGENT=true
 ENABLE_SECURITY_AGENT=true
@@ -402,7 +402,7 @@ ENABLE_DEPENDENCY_AGENT=true
 ENABLE_PERFORMANCE_AGENT=true
 ```
 
-### Pydantic Settings Model
+### Pydantic 设置模型
 
 ```python
 class AgentSettings(BaseSettings):
@@ -419,9 +419,9 @@ class AgentSettings(BaseSettings):
 
 ---
 
-## Agent Result Aggregation
+## 代理结果聚合
 
-The orchestrator aggregates results from all agents:
+协调器聚合所有代理的结果：
 
 ```python
 class AggregatedResult(BaseModel):
@@ -438,20 +438,20 @@ class AggregatedResult(BaseModel):
     summary: str
 ```
 
-Aggregation logic:
-1. Collect all successful agent results
-2. Weight scores by importance
-3. Identify cross-cutting concerns
-4. Resolve conflicting recommendations
-5. Generate unified summary
+聚合逻辑：
+1. 收集所有成功的代理结果
+2. 按重要性加权分数
+3. 识别跨领域问题
+4. 解决冲突的建议
+5. 生成统一摘要
 
 ---
 
-## Testing Agents
+## 测试代理
 
-### Unit Testing
+### 单元测试
 
-Test each agent with mock contexts:
+使用模拟上下文测试每个代理：
 ```python
 def test_architecture_agent():
     agent = ArchitectureAgent()
@@ -460,9 +460,9 @@ def test_architecture_agent():
     assert result.architectural_style is not None
 ```
 
-### Integration Testing
+### 集成测试
 
-Test agent interactions:
+测试代理交互：
 ```python
 async def test_agent_orchestration():
     orchestrator = AnalysisOrchestrator()
@@ -470,27 +470,27 @@ async def test_agent_orchestration():
     assert len(result.agents_executed) > 0
 ```
 
-### Fixture Repositories
+### 固定仓库
 
-Maintain test repositories with known characteristics:
-- Simple Flask app
-- Complex microservices architecture
-- Poor quality codebase
-- Well-documented library
-- Security-vulnerable application
-
----
-
-## Future Agent Ideas
-
-1. **Accessibility Agent**: Check UI accessibility compliance
-2. **Compliance Agent**: Verify regulatory compliance (GDPR, HIPAA)
-3. **Localization Agent**: Assess internationalization readiness
-4. **DevOps Agent**: Evaluate CI/CD and deployment practices
-5. **Community Agent**: Analyze community engagement and contribution guidelines
-6. **Cost Agent**: Estimate cloud infrastructure costs
-7. **Migration Agent**: Suggest modernization paths
+维护具有已知特征的测试仓库：
+- 简单的 Flask 应用
+- 复杂的微服务架构
+- 低质量代码库
+- 文档完善的库
+- 存在安全漏洞的应用
 
 ---
 
-*Last Updated: 2026-05-14*
+## 未来代理想法
+
+1. **可访问性代理**：检查 UI 可访问性合规性
+2. **合规代理**：验证监管合规性（GDPR、HIPAA）
+3. **本地化代理**：评估国际化准备情况
+4. **DevOps 代理**：评估 CI/CD 和部署实践
+5. **社区代理**：分析社区参与和贡献指南
+6. **成本代理**：估算云基础设施成本
+7. **迁移代理**：建议现代化路径
+
+---
+
+*最后更新：2026-05-14*

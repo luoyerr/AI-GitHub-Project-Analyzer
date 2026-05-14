@@ -1,78 +1,78 @@
-# Project Structure Guide
+# 项目结构指南
 
-## Complete Directory Structure
+## 完整目录结构
 
 ```
 ai-github-analyzer/
 │
-├── src/                          # Source code (src layout pattern)
-│   ├── __init__.py              # Package initialization, version info
+├── src/                          # 源代码（src 布局模式）
+│   ├── __init__.py              # 包初始化，版本信息
 │   │
-│   ├── orchestrator/            # 🎯 Workflow Orchestration
+│   ├── orchestrator/            # 🎯 工作流协调
 │   │   └── __init__.py
-│   │   # Responsibilities:
-│   │   # - Coordinate analysis pipeline execution
-│   │   # - Manage module lifecycle
-│   │   # - Handle errors and retries
-│   │   # - Track progress and status
-│   │   # Future files:
-│   │   # - orchestrator.py: Main orchestrator class
-│   │   # - workflow.py: Workflow definitions
-│   │   # - task_manager.py: Async task management
+│   │   # 职责：
+│   │   # - 协调分析管道执行
+│   │   # - 管理模块生命周期
+│   │   # - 处理错误和重试
+│   │   # - 跟踪进度和状态
+│   │   # 未来文件：
+│   │   # - orchestrator.py: 主协调器类
+│   │   # - workflow.py: 工作流定义
+│   │   # - task_manager.py: 异步任务管理
 │   │
-│   ├── scanner/                 # 🔍 Repository Scanning
+│   ├── scanner/                 # 🔍 仓库扫描
 │   │   └── __init__.py
-│   │   # Responsibilities:
-│   │   # - Clone/access repositories (local/remote)
-│   │   # - Build file tree structure
-│   │   # - Count files, lines, directories
-│   │   # - Detect programming languages
-│   │   # - Extract dependency information
-│   │   # Future files:
-│   │   # - repo_scanner.py: Core scanning logic
-│   │   # - file_analyzer.py: File-level analysis
-│   │   # - language_detector.py: Language identification
-│   │   # - dependency_extractor.py: Dependency parsing
+│   │   # 职责：
+│   │   # - 克隆/访问仓库（本地/远程）
+│   │   # - 构建文件树结构
+│   │   # - 统计文件、行数、目录
+│   │   # - 检测编程语言
+│   │   # - 提取依赖信息
+│   │   # 未来文件：
+│   │   # - repo_scanner.py: 核心扫描逻辑
+│   │   # - file_analyzer.py: 文件级分析
+│   │   # - language_detector.py: 语言识别
+│   │   # - dependency_extractor.py: 依赖解析
 │   │
-│   ├── classifier/              # 🏷️ Technology Classification
+│   ├── classifier/              # 🏷️ 技术分类
 │   │   └── __init__.py
-│   │   # Responsibilities:
-│   │   # - Identify primary programming language
-│   │   # - Detect frameworks and libraries
-│   │   # - Classify repository type
-│   │   # - Identify architectural patterns
-│   │   # - Calculate confidence scores
-│   │   # Future files:
-│   │   # - tech_classifier.py: Technology detection
-│   │   # - pattern_recognizer.py: Pattern matching
-│   │   # - repo_categorizer.py: Repository classification
-│   │   # - rules_engine.py: Classification rules
+│   │   # 职责：
+│   │   # - 识别主要编程语言
+│   │   # - 检测框架和库
+│   │   # - 分类仓库类型
+│   │   # - 识别架构模式
+│   │   # - 计算置信度分数
+│   │   # 未来文件：
+│   │   # - tech_classifier.py: 技术检测
+│   │   # - pattern_recognizer.py: 模式匹配
+│   │   # - repo_categorizer.py: 仓库分类
+│   │   # - rules_engine.py: 分类规则
 │   │
-│   ├── context_builder/         # 📚 Context Aggregation
+│   ├── context_builder/         # 📚 上下文聚合
 │   │   └── __init__.py
-│   │   # Responsibilities:
-│   │   # - Merge scan and classification results
-│   │   # - Build comprehensive repository context
-│   │   # - Extract key files (README, configs)
-│   │   # - Prepare context for AI agents
-│   │   # - Optimize context size for token limits
-│   │   # Future files:
-│   │   # - context_assembler.py: Context building
-│   │   # - file_extractor.py: Key file extraction
-│   │   # - context_optimizer.py: Size optimization
+│   │   # 职责：
+│   │   # - 合并扫描和分类结果
+│   │   # - 构建全面的仓库上下文
+│   │   # - 提取关键文件（README、配置）
+│   │   # - 为 AI 代理准备上下文
+│   │   # - 优化上下文大小以适应 token 限制
+│   │   # 未来文件：
+│   │   # - context_assembler.py: 上下文构建
+│   │   # - file_extractor.py: 关键文件提取
+│   │   # - context_optimizer.py: 大小优化
 │   │
-│   ├── agents/                  # 🤖 AI Agent Implementations
+│   ├── agents/                  # 🤖 AI 代理实现
 │   │   └── __init__.py
-│   │   # Responsibilities:
-│   │   # - Architecture analysis agent
-│   │   # - Code quality assessment agent
-│   │   # - Security vulnerability detection agent
-│   │   # - Documentation evaluation agent
-│   │   # - Recommendation generation agent
-│   │   # - Dependency health analysis agent
-│   │   # - Performance bottleneck detection agent
-│   │   # Future files:
-│   │   # - base_agent.py: Base agent class
+│   │   # 职责：
+│   │   # - 架构分析代理
+│   │   # - 代码质量评估代理
+│   │   # - 安全漏洞检测代理
+│   │   # - 文档评估代理
+│   │   # - 建议生成代理
+│   │   # - 依赖健康分析代理
+│   │   # - 性能瓶颈检测代理
+│   │   # 未来文件：
+│   │   # - base_agent.py: 基础代理类
 │   │   # - architecture_agent.py
 │   │   # - quality_agent.py
 │   │   # - security_agent.py
@@ -80,87 +80,87 @@ ai-github-analyzer/
 │   │   # - recommendation_agent.py
 │   │   # - dependency_agent.py
 │   │   # - performance_agent.py
-│   │   # - agent_registry.py: Agent management
+│   │   # - agent_registry.py: 代理管理
 │   │
-│   ├── validators/              # ✅ Result Validation
+│   ├── validators/              # ✅ 结果验证
 │   │   └── __init__.py
-│   │   # Responsibilities:
-│   │   # - Validate analysis completeness
-│   │   # - Check data consistency
-│   │   # - Verify result integrity
-│   │   # - Apply validation rules
-│   │   # - Generate validation reports
-│   │   # Future files:
-│   │   # - result_validator.py: Main validator
-│   │   # - rule_engine.py: Validation rules
-│   │   # - quality_checker.py: Quality checks
+│   │   # 职责：
+│   │   # - 验证分析完整性
+│   │   # - 检查数据一致性
+│   │   # - 验证结果完整性
+│   │   # - 应用验证规则
+│   │   # - 生成验证报告
+│   │   # 未来文件：
+│   │   # - result_validator.py: 主验证器
+│   │   # - rule_engine.py: 验证规则
+│   │   # - quality_checker.py: 质量检查
 │   │
-│   ├── renderer/                # 📊 Output Rendering
+│   ├── renderer/                # 📊 输出渲染
 │   │   └── __init__.py
-│   │   # Responsibilities:
-│   │   # - Format results (Markdown, JSON, HTML)
-│   │   # - Apply styling and formatting
-│   │   # - Generate terminal output with Rich
-│   │   # - Export to files
-│   │   # - Support custom templates
-│   │   # Future files:
+│   │   # 职责：
+│   │   # - 格式化结果（Markdown、JSON、HTML）
+│   │   # - 应用样式和格式化
+│   │   # - 使用 Rich 生成终端输出
+│   │   # - 导出到文件
+│   │   # - 支持自定义模板
+│   │   # 未来文件：
 │   │   # - markdown_renderer.py
 │   │   # - json_renderer.py
 │   │   # - html_renderer.py
-│   │   # - terminal_renderer.py: Rich-based output
-│   │   # - template_engine.py: Template processing
+│   │   # - terminal_renderer.py: 基于 Rich 的输出
+│   │   # - template_engine.py: 模板处理
 │   │
-│   ├── models/                  # 📦 Pydantic Data Models
+│   ├── models/                  # 📦 Pydantic 数据模型
 │   │   ├── __init__.py
-│   │   └── base_models.py      # Core data models (already created)
-│   │   # Responsibilities:
-│   │   # - Define all data structures
-│   │   # - Ensure type safety
-│   │   # - Provide validation
-│   │   # - Document data contracts
-│   │   # Future files:
-│   │   # - agent_models.py: Agent-specific models
-│   │   # - config_models.py: Configuration models
-│   │   # - result_models.py: Result models
+│   │   └── base_models.py      # 核心数据模型（已创建）
+│   │   # 职责：
+│   │   # - 定义所有数据结构
+│   │   # - 确保类型安全
+│   │   # - 提供验证
+│   │   # - 记录数据契约
+│   │   # 未来文件：
+│   │   # - agent_models.py: 代理特定模型
+│   │   # - config_models.py: 配置模型
+│   │   # - result_models.py: 结果模型
 │   │
-│   ├── infrastructure/          # 🔧 Core Infrastructure
+│   ├── infrastructure/          # 🔧 核心基础设施
 │   │   └── __init__.py
-│   │   # Responsibilities:
-│   │   # - Configuration management
-│   │   # - Logging setup
-│   │   # - Error handling utilities
-│   │   # - Async helpers
-│   │   # - External service clients
-│   │   # Future files:
-│   │   # - config.py: Settings management
-│   │   # - logging_config.py: Loguru configuration
-│   │   # - github_client.py: GitHub API client
-│   │   # - ai_client.py: AI provider client
-│   │   # - exceptions.py: Custom exceptions
-│   │   # - async_utils.py: Async utilities
+│   │   # 职责：
+│   │   # - 配置管理
+│   │   # - 日志设置
+│   │   # - 错误处理工具
+│   │   # - 异步辅助工具
+│   │   # - 外部服务客户端
+│   │   # 未来文件：
+│   │   # - config.py: 设置管理
+│   │   # - logging_config.py: Loguru 配置
+│   │   # - github_client.py: GitHub API 客户端
+│   │   # - ai_client.py: AI 提供商客户端
+│   │   # - exceptions.py: 自定义异常
+│   │   # - async_utils.py: 异步工具
 │   │
-│   └── utils/                   # 🛠️ Utility Functions
+│   └── utils/                   # 🛠️ 实用函数
 │       └── __init__.py
-│       # Responsibilities:
-│       # - File system operations
-│       # - String manipulation
-│       # - Date/time helpers
-│       # - Common algorithms
-│       # - Helper functions
-│       # Future files:
-│       # - file_utils.py: File operations
-│       # - string_utils.py: String helpers
-│       # - git_utils.py: Git operations
-│       # - path_utils.py: Path manipulation
-│       # - time_utils.py: Time utilities
+│       # 职责：
+│       # - 文件系统操作
+│       # - 字符串操作
+│       # - 日期/时间辅助工具
+│       # - 常用算法
+│       # - 辅助函数
+│       # 未来文件：
+│       # - file_utils.py: 文件操作
+│       # - string_utils.py: 字符串辅助工具
+│       # - git_utils.py: Git 操作
+│       # - path_utils.py: 路径操作
+│       # - time_utils.py: 时间工具
 │
-├── prompts/                     # 💬 AI Prompt Templates
-│   # Purpose: Store AI prompt templates separately from code
-│   # Benefits:
-│   # - Easy to modify without code changes
-│   # - Version control for prompts
-│   # - A/B testing different prompts
-│   # Future files:
+├── prompts/                     # 💬 AI 提示模板
+│   # 目的：将 AI 提示模板与代码分开存储
+│   # 优势：
+│   # - 无需代码更改即可轻松修改
+│   # - 提示的版本控制
+│   # - A/B 测试不同提示
+│   # 未来文件：
 │   # - architecture_agent_prompt.txt
 │   # - quality_agent_prompt.txt
 │   # - security_agent_prompt.txt
@@ -168,33 +168,33 @@ ai-github-analyzer/
 │   # - recommendation_agent_prompt.txt
 │   # - system_prompt.txt
 │
-├── schemas/                     # 📋 JSON Schemas
-│   # Purpose: JSON schema definitions for external integrations
-│   # Benefits:
-│   # - API contract validation
-│   # - External tool integration
-│   # - Data exchange standards
-│   # Future files:
+├── schemas/                     # 📋 JSON 模式
+│   # 目的：用于外部集成的 JSON 模式定义
+│   # 优势：
+│   # - API 契约验证
+│   # - 外部工具集成
+│   # - 数据交换标准
+│   # 未来文件：
 │   # - analysis_result_schema.json
 │   # - agent_input_schema.json
 │   # - agent_output_schema.json
 │
-├── traces/                      # 🔎 Execution Traces
-│   # Purpose: Store execution traces for debugging and analysis
-│   # Contents:
-│   # - Agent interaction logs
-│   # - Performance profiling data
-│   # - Debug information
-│   # Note: This directory is gitignored
-│   # Future files:
-│   # - trace_*.json: Individual trace files
-│   # - profiles/: Performance profiles
+├── traces/                      # 🔎 执行追踪
+│   # 目的：存储执行追踪以进行调试和分析
+│   # 内容：
+│   # - 代理交互日志
+│   # - 性能分析数据
+│   # - 调试信息
+│   # 注意：此目录已被 gitignore
+│   # 未来文件：
+│   # - trace_*.json: 单个追踪文件
+│   # - profiles/: 性能配置文件
 │
-├── tests/                       # 🧪 Test Suite
-│   # Purpose: Comprehensive test coverage
-│   # Structure: Mirror src/ directory structure
-│   # Future files:
-│   # - conftest.py: pytest fixtures
+├── tests/                       # 🧪 测试套件
+│   # 目的：全面的测试覆盖
+│   # 结构：镜像 src/ 目录结构
+│   # 未来文件：
+│   # - conftest.py: pytest 夹具
 │   # - test_orchestrator/
 │   # - test_scanner/
 │   # - test_classifier/
@@ -205,332 +205,332 @@ ai-github-analyzer/
 │   # - integration/
 │   # - e2e/
 │
-├── docs/                        # 📖 Documentation
-│   ├── design-docs/            # Design documents and RFCs
-│   │   # Future files:
+├── docs/                        # 📖 文档
+│   ├── design-docs/            # 设计文档和 RFC
+│   │   # 未来文件：
 │   │   # - ADR-001-architecture-decision.md
 │   │   # - RFC-001-agent-system.md
 │   │   # - design-specifications.md
 │   │
-│   └── ENVIRONMENT_SETUP.md    # Environment setup guide (created)
-│       # Additional future docs:
+│   └── ENVIRONMENT_SETUP.md    # 环境设置指南（已创建）
+│       # 其他未来文档：
 │       # - API_REFERENCE.md
 │       # - CONTRIBUTING.md
 │       # - DEPLOYMENT.md
 │
-├── main.py                      # 🚀 CLI Entry Point (created)
-│   # Purpose: Main application entry point
-│   # Features:
-│   # - Typer-based CLI interface
-│   # - Rich terminal output
-│   # - Loguru logging setup
-│   # - Command: analyze <repo_url>
-│   # - Command: version
+├── main.py                      # 🚀 CLI 入口点（已创建）
+│   # 目的：主应用程序入口点
+│   # 功能：
+│   # - 基于 Typer 的 CLI 界面
+│   # - Rich 终端输出
+│   # - Loguru 日志设置
+│   # - 命令：analyze <repo_url>
+│   # - 命令：version
 │
-├── pyproject.toml               # ⚙️ Project Configuration (created)
-│   # Purpose: Modern Python project configuration
-│   # Contains:
-│   # - Project metadata
-│   # - Dependencies
-│   # - Build system settings
-│   # - Tool configurations (black, ruff, mypy)
+├── pyproject.toml               # ⚙️ 项目配置（已创建）
+│   # 目的：现代 Python 项目配置
+│   # 包含：
+│   # - 项目元数据
+│   # - 依赖
+│   # - 构建系统设置
+│   # - 工具配置（black、ruff、mypy）
 │
-├── .gitignore                   # 🚫 Git Ignore Rules (created)
-│   # Purpose: Exclude unnecessary files from git
-│   # Includes:
-│   # - Python cache files
-│   # - Virtual environments
-│   # - IDE settings
-│   # - Logs and traces
-│   # - Environment files
+├── .gitignore                   # 🚫 Git 忽略规则（已创建）
+│   # 目的：从 git 中排除不必要的文件
+│   # 包括：
+│   # - Python 缓存文件
+│   # - 虚拟环境
+│   # - IDE 设置
+│   # - 日志和追踪
+│   # - 环境文件
 │
-├── .env.example                 # 📝 Environment Variables Template (created)
-│   # Purpose: Template for environment configuration
-│   # Usage: Copy to .env and fill in values
+├── .env.example                 # 📝 环境变量模板（已创建）
+│   # 目的：环境配置模板
+│   # 用法：复制到 .env 并填写值
 │
-├── setup.ps1                    # ⚡ Quick Setup Script (created)
-│   # Purpose: Automated environment setup for Windows
-│   # Features:
-│   # - Check prerequisites
-│   # - Create conda environment
-│   # - Install dependencies
-│   # - Verify installation
+├── setup.ps1                    # ⚡ 快速设置脚本（已创建）
+│   # 目的：Windows 的自动化环境设置
+│   # 功能：
+│   # - 检查前置要求
+│   # - 创建 conda 环境
+│   # - 安装依赖
+│   # - 验证安装
 │
-├── README.md                    # 📘 Project Overview (created)
-│   # Purpose: Main project documentation
-│   # Contains:
-│   # - Project description
-│   # - Features list
-│   # - Installation instructions
-│   # - Usage examples
-│   # - Project structure
-│   # - Development guide
+├── README.md                    # 📘 项目概述（已创建）
+│   # 目的：主项目文档
+│   # 包含：
+│   # - 项目描述
+│   # - 特性列表
+│   # - 安装说明
+│   # - 使用示例
+│   # - 项目结构
+│   # - 开发指南
 │
-├── ARCHITECTURE.md              # 🏗️ Architecture Design (created)
-│   # Purpose: Detailed architecture documentation
-│   # Contains:
-│   # - Architectural principles
-│   # - Module responsibilities
-│   # - Data flow diagrams
-│   # - Technology stack rationale
-│   # - Extension points
+├── ARCHITECTURE.md              # 🏗️ 架构设计（已创建）
+│   # 目的：详细的架构文档
+│   # 包含：
+│   # - 架构原则
+│   # - 模块职责
+│   # - 数据流图
+│   # - 技术栈选择理由
+│   # - 扩展点
 │
-├── AGENTS.md                    # 🤖 Agent Specifications (created)
-│   # Purpose: AI agent design documentation
-│   # Contains:
-│   # - Agent types and purposes
-│   # - Input/output specifications
-│   # - Prompt engineering guidelines
-│   # - Configuration options
-│   # - Testing strategies
+├── AGENTS.md                    # 🤖 代理规范（已创建）
+│   # 目的：AI 代理设计文档
+│   # 包含：
+│   # - 代理类型和目的
+│   # - 输入/输出规范
+│   # - 提示工程指南
+│   # - 配置选项
+│   # - 测试策略
 │
-└── LICENSE                      # 📄 License File (to be added)
-    # Purpose: Project license (MIT recommended)
+└── LICENSE                      # 📄 许可证文件（待添加）
+    # 目的：项目许可证（推荐 MIT）
 ```
 
 ---
 
-## Module Communication Flow
+## 模块通信流程
 
 ```
-User Input (CLI)
+用户输入 (CLI)
     ↓
 main.py (Typer CLI)
     ↓
-Orchestrator (coordinates workflow)
+协调器（协调工作流）
     ↓
-Scanner → ScanResult (Pydantic model)
+扫描器 → ScanResult（Pydantic 模型）
     ↓
-Classifier → ClassificationResult (Pydantic model)
+分类器 → ClassificationResult（Pydantic 模型）
     ↓
-Context Builder → Enriched Context (Pydantic model)
+上下文构建器 → 丰富的上下文（Pydantic 模型）
     ↓
-Agents (parallel execution)
-    ├→ Architecture Agent → ArchitectureAnalysis
-    ├→ Quality Agent → QualityAnalysis
-    ├→ Security Agent → SecurityAnalysis
-    ├→ Documentation Agent → DocumentationAnalysis
-    └→ Other Agents → Their Results
+代理（并行执行）
+    ├→ 架构代理 → ArchitectureAnalysis
+    ├→ 质量代理 → QualityAnalysis
+    ├→ 安全代理 → SecurityAnalysis
+    ├→ 文档代理 → DocumentationAnalysis
+    └→ 其他代理 → 它们的结果
     ↓
-Validator → Validated Results
+验证器 → 验证结果
     ↓
-Renderer → Formatted Output
+渲染器 → 格式化输出
     ↓
-Display to User (Rich terminal)
+展示给用户（Rich 终端）
 ```
 
 ---
 
-## Key Design Decisions
+## 关键设计决策
 
-### 1. Why `src/` Layout?
+### 1. 为什么使用 `src/` 布局？
 
-**Benefits**:
-- Prevents import conflicts during development
-- Clear separation between source and tests
-- Standard Python packaging practice
-- Easier to test with isolated imports
-- Avoids accidental imports of uninstalled code
+**优势**：
+- 防止开发期间的导入冲突
+- 源代码和测试之间的清晰分离
+- 标准的 Python 打包实践
+- 使用隔离导入更容易测试
+- 避免意外导入未安装的代码
 
-**Alternative Considered**: Flat layout (rejected)
-- Can cause import confusion
-- Harder to test properly
-- Not recommended by modern Python packaging guides
-
----
-
-### 2. Why Pydantic Models for Communication?
-
-**Benefits**:
-- Runtime validation at module boundaries
-- Type safety across the entire pipeline
-- Self-documenting data contracts
-- Easy serialization/deserialization
-- IDE autocomplete support
-- Automatic JSON schema generation
-
-**Alternative Considered**: Dicts/dataclasses (rejected)
-- No runtime validation
-- Less clear contracts
-- More error-prone
+**考虑的替代方案**：平面布局（已拒绝）
+- 可能导致导入混淆
+- 更难正确测试
+- 现代 Python 打包指南不推荐
 
 ---
 
-### 3. Why Separate Prompts Directory?
+### 2. 为什么使用 Pydantic 模型进行通信？
 
-**Benefits**:
-- Prompt engineering without code changes
-- Version control for prompts
-- Easy A/B testing
-- Non-developers can modify prompts
-- Clear separation of concerns
+**优势**：
+- 模块边界的运行时验证
+- 整个管道的类型安全
+- 自文档化的数据契约
+- 易于序列化/反序列化
+- IDE 自动完成支持
+- 自动生成 JSON 模式
 
-**Alternative Considered**: Inline prompts (rejected)
-- Hard to maintain
-- Requires code changes for prompt tweaks
-- Difficult to test different versions
-
----
-
-### 4. Why No ORM or Database?
-
-**Rationale**:
-- First version focuses on single-run analysis
-- No need for persistent storage initially
-- Keeps architecture lightweight
-- Can add database later when needed
-- Follows "no over-engineering" principle
-
-**Future Enhancement**:
-- Add SQLite/PostgreSQL for analysis history
-- Implement caching layer
-- Store comparison data
+**考虑的替代方案**：Dicts/dataclasses（已拒绝）
+- 无运行时验证
+- 契约不太清晰
+- 更容易出错
 
 ---
 
-### 5. Why Async-First Design?
+### 3. 为什么单独的 Prompts 目录？
 
-**Benefits**:
-- Parallel agent execution
-- Efficient I/O operations (GitHub API, file system)
-- Non-blocking operations
-- Better resource utilization
-- Scalable for large repositories
+**优势**：
+- 无需代码更改即可进行提示工程
+- 提示的版本控制
+- 易于 A/B 测试
+- 非开发者可以修改提示
+- 清晰的关注点分离
 
-**Implementation**:
-- asyncio for concurrency
-- Async/await syntax throughout
-- Task groups for parallel execution
-
----
-
-### 6. Why Multiple Specialized Agents?
-
-**Benefits**:
-- Single responsibility per agent
-- Easier to test and maintain
-- Can enable/disable agents independently
-- Parallel execution possible
-- Clear separation of concerns
-- Easy to add new agents
-
-**Alternative Considered**: Single monolithic agent (rejected)
-- Too complex
-- Hard to maintain
-- Cannot parallelize
-- Difficult to test
+**考虑的替代方案**：内联提示（已拒绝）
+- 难以维护
+- 提示调整需要代码更改
+- 难以测试不同版本
 
 ---
 
-## File Naming Conventions
+### 4. 为什么没有 ORM 或数据库？
 
-### Python Files
-- **Modules**: `snake_case.py` (e.g., `file_analyzer.py`)
-- **Classes**: `PascalCase` (e.g., `FileAnalyzer`)
-- **Functions**: `snake_case` (e.g., `analyze_file()`)
-- **Constants**: `UPPER_CASE` (e.g., `MAX_FILE_SIZE`)
-- **Private**: `_leading_underscore` (e.g., `_internal_method()`)
+**理由**：
+- 第一版本专注于单次运行分析
+- 最初不需要持久存储
+- 保持架构轻量级
+- 需要时可以稍后添加数据库
+- 遵循"无过度工程"原则
 
-### Test Files
-- Mirror source structure: `test_<module_name>.py`
-- Example: `src/scanner/file_analyzer.py` → `tests/test_scanner/test_file_analyzer.py`
-
-### Documentation Files
-- `UPPER_CASE.md` for main docs (README, ARCHITECTURE)
-- `kebab-case.md` for sub-docs (environment-setup.md)
-
-### Prompt Files
-- `<agent_name>_prompt.txt` (e.g., `architecture_agent_prompt.txt`)
+**未来增强**：
+- 添加 SQLite/PostgreSQL 用于分析历史
+- 实现缓存层
+- 存储比较数据
 
 ---
 
-## Import Guidelines
+### 5. 为什么异步优先设计？
 
-### Within src/
+**优势**：
+- 并行代理执行
+- 高效的 I/O 操作（GitHub API、文件系统）
+- 非阻塞操作
+- 更好的资源利用
+- 可扩展以处理大型仓库
+
+**实现**：
+- asyncio 用于并发
+- 全程使用 async/await 语法
+- 任务组用于并行执行
+
+---
+
+### 6. 为什么多个专业化代理？
+
+**优势**：
+- 每个代理单一职责
+- 更容易测试和维护
+- 可以独立启用/禁用代理
+- 可以并行执行
+- 清晰的关注点分离
+- 易于添加新代理
+
+**考虑的替代方案**：单一体代理（已拒绝）
+- 太复杂
+- 难以维护
+- 无法并行化
+- 难以测试
+
+---
+
+## 文件命名约定
+
+### Python 文件
+- **模块**：`snake_case.py`（例如 `file_analyzer.py`）
+- **类**：`PascalCase`（例如 `FileAnalyzer`）
+- **函数**：`snake_case`（例如 `analyze_file()`）
+- **常量**：`UPPER_CASE`（例如 `MAX_FILE_SIZE`）
+- **私有**：`_leading_underscore`（例如 `_internal_method()`）
+
+### 测试文件
+- 镜像源结构：`test_<module_name>.py`
+- 示例：`src/scanner/file_analyzer.py` → `tests/test_scanner/test_file_analyzer.py`
+
+### 文档文件
+- 主文档使用 `UPPER_CASE.md`（README、ARCHITECTURE）
+- 子文档使用 `kebab-case.md`（environment-setup.md）
+
+### 提示文件
+- `<agent_name>_prompt.txt`（例如 `architecture_agent_prompt.txt`）
+
+---
+
+## 导入指南
+
+### 在 src/ 内部
 
 ```python
-# ✅ Correct: Absolute imports from src
+# ✅ 正确：从 src 绝对导入
 from src.models.base_models import AnalysisConfig
 from src.scanner.repo_scanner import RepositoryScanner
 
-# ❌ Avoid: Relative imports (harder to refactor)
+# ❌ 避免：相对导入（更难重构）
 from ..models.base_models import AnalysisConfig
 ```
 
-### In Tests
+### 在测试中
 
 ```python
-# ✅ Correct: Import from src package
+# ✅ 正确：从 src 包导入
 from src.models.base_models import AnalysisConfig
 
-# ❌ Avoid: Import from local path
+# ❌ 避免：从本地路径导入
 import sys
 sys.path.insert(0, '../src')
 ```
 
 ---
 
-## Dependency Management
+## 依赖管理
 
-### Current Dependencies (pyproject.toml)
+### 当前依赖（pyproject.toml）
 
-**Core**:
-- `typer>=0.9.0`: CLI framework
-- `rich>=13.7.0`: Terminal formatting
-- `loguru>=0.7.0`: Logging
-- `pydantic>=2.5.0`: Data validation
-- `pydantic-settings>=2.1.0`: Settings management
+**核心**：
+- `typer>=0.9.0`: CLI 框架
+- `rich>=13.7.0`: 终端格式化
+- `loguru>=0.7.0`: 日志记录
+- `pydantic>=2.5.0`: 数据验证
+- `pydantic-settings>=2.1.0`: 设置管理
 
-**Development** (optional):
-- `pytest>=7.4.0`: Testing
-- `pytest-asyncio>=0.21.0`: Async testing
-- `black>=23.0.0`: Code formatting
-- `ruff>=0.1.0`: Linting
-- `mypy>=1.7.0`: Type checking
+**开发**（可选）：
+- `pytest>=7.4.0`: 测试
+- `pytest-asyncio>=0.21.0`: 异步测试
+- `black>=23.0.0`: 代码格式化
+- `ruff>=0.1.0`: 代码检查
+- `mypy>=1.7.0`: 类型检查
 
-### Future Dependencies (by module)
+### 未来依赖（按模块）
 
-**Scanner**:
-- `gitpython`: Git operations
-- `pathspec`: .gitignore parsing
+**扫描器**：
+- `gitpython`: Git 操作
+- `pathspec`: .gitignore 解析
 
-**Classifier**:
-- `lingua-language-detector`: Language detection
+**分类器**：
+- `lingua-language-detector`: 语言检测
 
-**Agents**:
-- `openai`: OpenAI API client
-- OR `anthropic`: Anthropic API client
+**代理**：
+- `openai`: OpenAI API 客户端
+- 或 `anthropic`: Anthropic API 客户端
 
-**Infrastructure**:
-- `aiohttp`: Async HTTP client
-- `python-dotenv`: Environment variables
+**基础设施**：
+- `aiohttp`: 异步 HTTP 客户端
+- `python-dotenv`: 环境变量
 
 ---
 
-## Testing Strategy
+## 测试策略
 
-### Test Types
+### 测试类型
 
-1. **Unit Tests** (`tests/unit/`)
-   - Test individual functions/classes
-   - Mock external dependencies
-   - Fast execution
+1. **单元测试** (`tests/unit/`)
+   - 测试单个函数/类
+   - 模拟外部依赖
+   - 快速执行
 
-2. **Integration Tests** (`tests/integration/`)
-   - Test module interactions
-   - Real dependencies where practical
-   - Medium execution time
+2. **集成测试** (`tests/integration/`)
+   - 测试模块交互
+   - 实际依赖（如果可行）
+   - 中等执行时间
 
-3. **E2E Tests** (`tests/e2e/`)
-   - Full workflow execution
-   - Real repositories
-   - Slow execution
+3. **端到端测试** (`tests/e2e/`)
+   - 完整工作流执行
+   - 真实仓库
+   - 慢速执行
 
-### Test Organization
+### 测试组织
 
 ```
 tests/
-├── conftest.py              # Shared fixtures
+├── conftest.py              # 共享夹具
 ├── unit/
 │   ├── test_scanner/
 │   ├── test_classifier/
@@ -543,73 +543,73 @@ tests/
 │   ├── test_full_analysis.py
 │   └── test_cli_commands.py
 └── fixtures/
-    ├── sample_repos/        # Test repositories
-    └── mock_data/           # Mock responses
+    ├── sample_repos/        # 测试仓库
+    └── mock_data/           # 模拟响应
 ```
 
 ---
 
-## Logging Strategy
+## 日志策略
 
-### Log Levels
+### 日志级别
 
-- **DEBUG**: Detailed diagnostic information
-- **INFO**: General operational messages
-- **WARNING**: Unexpected but handled situations
-- **ERROR**: Errors that don't stop execution
-- **CRITICAL**: Fatal errors that stop execution
+- **DEBUG**: 详细的诊断信息
+- **INFO**: 一般操作消息
+- **WARNING**: 意外但已处理的情况
+- **ERROR**: 不停止执行的错误
+- **CRITICAL**: 停止执行的致命错误
 
-### Log Destinations
+### 日志目标
 
-1. **Console** (stderr): INFO and above, colorized
-2. **File** (logs/): DEBUG and above, rotated daily
-3. **Traces** (traces/): Agent interactions, JSON format
+1. **控制台**（stderr）：INFO 及以上级别，彩色
+2. **文件**（logs/）：DEBUG 及以上级别，每天轮换
+3. **追踪**（traces/）：代理交互，JSON 格式
 
-### Log Format
+### 日志格式
 
 ```
-2026-05-14 10:30:45 | INFO     | src.scanner.repo_scanner:scan:42 - Scanning repository...
-2026-05-14 10:30:46 | DEBUG    | src.agents.quality_agent:analyze:87 - Analyzing 150 files
-2026-05-14 10:30:47 | ERROR    | src.infrastructure.github_client:fetch:123 - API rate limit exceeded
+2026-05-14 10:30:45 | INFO     | src.scanner.repo_scanner:scan:42 - 正在扫描仓库...
+2026-05-14 10:30:46 | DEBUG    | src.agents.quality_agent:analyze:87 - 正在分析 150 个文件
+2026-05-14 10:30:47 | ERROR    | src.infrastructure.github_client:fetch:123 - API 速率限制超出
 ```
 
 ---
 
-## Error Handling Strategy
+## 错误处理策略
 
-### Exception Hierarchy
+### 异常层次结构
 
 ```python
 # src/infrastructure/exceptions.py
 
 class AnalyzerError(Exception):
-    """Base exception for all analyzer errors."""
+    """所有分析器错误的基础异常。"""
     pass
 
 class ScannerError(AnalyzerError):
-    """Errors during repository scanning."""
+    """仓库扫描期间的错误。"""
     pass
 
 class ClassificationError(AnalyzerError):
-    """Errors during technology classification."""
+    """技术分类期间的错误。"""
     pass
 
 class AgentError(AnalyzerError):
-    """Errors during agent execution."""
+    """代理执行期间的错误。"""
     pass
 
 class ValidationError(AnalyzerError):
-    """Errors during result validation."""
+    """结果验证期间的错误。"""
     pass
 ```
 
-### Error Handling Pattern
+### 错误处理模式
 
 ```python
 try:
     result = await agent.analyze(context)
 except AgentError as e:
-    logger.error(f"Agent failed: {e}")
+    logger.error(f"代理失败：{e}")
     if config.retry_count > 0:
         result = await retry(agent.analyze, context)
     else:
@@ -618,16 +618,16 @@ except AgentError as e:
 
 ---
 
-## Configuration Management
+## 配置管理
 
-### Priority Order
+### 优先级顺序
 
-1. Command-line arguments (highest priority)
-2. Environment variables
-3. `.env` file
-4. Default values (lowest priority)
+1. 命令行参数（最高优先级）
+2. 环境变量
+3. `.env` 文件
+4. 默认值（最低优先级）
 
-### Implementation
+### 实现
 
 ```python
 # src/infrastructure/config.py
@@ -635,11 +635,11 @@ except AgentError as e:
 from pydantic_settings import BaseSettings
 
 class AppSettings(BaseSettings):
-    # CLI args override these
+    # CLI 参数覆盖这些
     repo_url: str
     output_format: str = "markdown"
     
-    # Environment variables
+    # 环境变量
     ai_provider: str = "openai"
     ai_model: str = "gpt-4-turbo"
     
@@ -650,32 +650,32 @@ class AppSettings(BaseSettings):
 
 ---
 
-## Next Steps for Development
+## 开发的下一步
 
-### Phase 1: Core Infrastructure (Week 1-2)
-- [ ] Implement Scanner module
-- [ ] Implement Classifier module
-- [ ] Complete Context Builder
-- [ ] Add GitHub API client
+### 第一阶段：核心基础设施（第 1-2 周）
+- [ ] 实现扫描器模块
+- [ ] 实现分类器模块
+- [ ] 完成上下文构建器
+- [ ] 添加 GitHub API 客户端
 
-### Phase 2: Agent System (Week 3-4)
-- [ ] Implement base agent framework
-- [ ] Create prompt templates
-- [ ] Build 2-3 core agents (Quality, Architecture, Security)
-- [ ] Implement agent orchestration
+### 第二阶段：代理系统（第 3-4 周）
+- [ ] 实现基础代理框架
+- [ ] 创建提示模板
+- [ ] 构建 2-3 个核心代理（质量、架构、安全）
+- [ ] 实现代理协调
 
-### Phase 3: Output & Validation (Week 5)
-- [ ] Implement Renderer module
-- [ ] Build validation system
-- [ ] Create Markdown and JSON renderers
-- [ ] Add Rich terminal output
+### 第三阶段：输出和验证（第 5 周）
+- [ ] 实现渲染器模块
+- [ ] 构建验证系统
+- [ ] 创建 Markdown 和 JSON 渲染器
+- [ ] 添加 Rich 终端输出
 
-### Phase 4: Testing & Polish (Week 6)
-- [ ] Write comprehensive tests
-- [ ] Performance optimization
-- [ ] Documentation completion
-- [ ] Beta testing
+### 第四阶段：测试和完善（第 6 周）
+- [ ] 编写全面的测试
+- [ ] 性能优化
+- [ ] 文档完成
+- [ ] Beta 测试
 
 ---
 
-*Last Updated: 2026-05-14*
+*最后更新：2026-05-14*

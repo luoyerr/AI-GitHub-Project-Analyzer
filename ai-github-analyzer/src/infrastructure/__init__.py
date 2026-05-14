@@ -1,3 +1,3 @@
 """
-Infrastructure module - Core infrastructure components (config, logging, etc.).
+基础设施模块 - 核心基础设施组件（配置、日志等）。
 """

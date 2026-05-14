@@ -26,9 +26,8 @@ from pathlib import Path
 # 将 src 目录添加到导入路径
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from src.models.base_models import AnalysisConfig, AnalysisResult, AnalysisStatus, RepositoryInfo
 from src.scanner import RepoResolver, RepositorySnapshot
-from src.analyzer.tech_stack import TechStackDetector
+from src.analyzer.tech_stack import TechStackAnalyzer
 
 app = typer.Typer(
     name="ai-github-analyzer",
@@ -279,9 +278,6 @@ def _display_snapshot(console: Console, snapshot: RepositorySnapshot):
             # 格式化大小
             size_str = _format_size(file_meta.size_bytes)
             
-            # 信息列
-            info = '文件'
-            
             table.add_row(
                 file_name,
                 file_type,
@@ -303,7 +299,6 @@ def _display_snapshot(console: Console, snapshot: RepositorySnapshot):
             size_str = _format_size(total_size)
             
             # 信息列：x目录 / x文件
-            info = f"{subdir_count}目录 / {file_count}文件"
             
             table.add_row(
                 f"📁 {dir_name}/",
@@ -335,38 +330,62 @@ def _display_tech_stack(console: Console, tech_stack):
     # 编程语言
     if tech_stack.languages:
         lines.append(f"[bold]编程语言：[/bold] {', '.join(tech_stack.languages)}")
+    else:
+        lines.append("[bold]编程语言：[/bold] 未识别")
     
     # 框架
     if tech_stack.frameworks:
         lines.append(f"[bold]框架：[/bold] {', '.join(tech_stack.frameworks)}")
+    else:
+        lines.append("[bold]框架：[/bold] 未识别")
     
     # 库
     if tech_stack.libraries:
-        lines.append(f"[bold]库：[/bold] {', '.join(tech_stack.libraries)}")
+        lines.append(f"[bold]类库：[/bold] {', '.join(tech_stack.libraries)}")
+    else:
+        lines.append("[bold]类库：[/bold] 未识别")
     
     # 构建工具
     if tech_stack.build_tools:
         lines.append(f"[bold]构建工具：[/bold] {', '.join(tech_stack.build_tools)}")
+    else:
+        lines.append("[bold]构建工具：[/bold] 未识别")
     
     # 包管理器
     if tech_stack.package_managers:
         lines.append(f"[bold]包管理器：[/bold] {', '.join(tech_stack.package_managers)}")
+    else:
+        lines.append("[bold]包管理器：[/bold] 未识别")
+    
+    # 数据库
+    if tech_stack.databases:
+        lines.append(f"[bold]数据库：[/bold] {', '.join(tech_stack.databases)}")
+    else:
+        lines.append("[bold]数据库：[/bold] 未识别")
     
     # CI/CD
     if tech_stack.ci_cd:
         lines.append(f"[bold]CI/CD：[/bold] {', '.join(tech_stack.ci_cd)}")
+    else:
+        lines.append("[bold]CI/CD：[/bold] 未识别")
     
     # 容器化
     if tech_stack.containers:
         lines.append(f"[bold]容器化：[/bold] {', '.join(tech_stack.containers)}")
+    else:
+        lines.append("[bold]容器化：[/bold] 未识别")
     
     # 云原生
     if tech_stack.cloud_native:
         lines.append(f"[bold]云原生：[/bold] {', '.join(tech_stack.cloud_native)}")
+    else:
+        lines.append("[bold]云原生：[/bold] 未识别")
     
     # 测试工具
     if tech_stack.testing_tools:
         lines.append(f"[bold]测试工具：[/bold] {', '.join(tech_stack.testing_tools)}")
+    else:
+        lines.append("[bold]测试工具：[/bold] 未识别")
     
     # 可信度
     confidence_percent = int(tech_stack.confidence * 100)
@@ -462,14 +481,27 @@ def analyze(
         # 显示扫描结果
         _display_snapshot(console, snapshot)
         
-        # 执行技术栈检测
+        # 执行技术栈分析（通过 TechStackAnalyzer）
         console.print("\n[bold blue]🔍 开始技术栈分析...[/bold blue]\n")
         
-        detector = TechStackDetector()
-        tech_stack = detector.detect(snapshot)
+        try:
+            analyzer = TechStackAnalyzer()
+            tech_stack = analyzer.analyze(snapshot)
+            
+            # 显示技术栈分析结果
+            _display_tech_stack(console, tech_stack)
+            
+        except Exception as e:
+            # 技术栈分析失败不影响主流程
+            logger.warning(f"技术栈分析失败：{str(e)}")
+            console.print("[bold yellow]⚠️  技术栈分析失败，但仓库扫描成功。[/bold yellow]\n")
         
-        # 显示技术栈分析结果
-        _display_tech_stack(console, tech_stack)
+        finally:
+            # 清理临时克隆目录（在技术栈分析完成后）
+            if resolver.is_temp_clone:
+                logger.info("开始清理临时克隆目录")
+                asyncio.run(resolver.github_cloner.cleanup())
+                resolver.is_temp_clone = False
         
         logger.info("仓库扫描成功完成")
         

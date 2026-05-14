@@ -2,45 +2,66 @@
 技术栈分析器
 
 职责：
-负责识别项目技术栈。
+作为技术栈分析的统一入口，协调检测器执行确定性技术栈分析。
 
-当前状态：
-骨架阶段，未实现逻辑。
+设计原则：
+1. 统一入口 - 所有技术栈分析必须通过此分析器
+2. 异常安全 - 分析失败不影响主流程
+3. 中文日志 - 所有日志使用中文
+4. 可扩展性 - 预留 AI 推理和质量检查的扩展点
 
-TODO:
-1. 技术规则识别
-2. 框架检测
-3. 包管理器识别
+当前阶段：
+仅支持确定性技术栈分析（基于规则匹配）。
+
+未来扩展：
+- ai_reasoner() - AI 推理增强
+- quality_check() - 质量检查
 """
 
-from typing import Any
+from loguru import logger
+
+from models import ProjectTechStack
+from scanner import RepositorySnapshot
 from ..base import BaseAnalyzer
 from .detector import TechStackDetector
 
 
 class TechStackAnalyzer(BaseAnalyzer):
-    """
-    技术栈分析器
+    """技术栈分析器。
     
-    继承自基础分析器，用于分析项目的技术栈组成。
+    继承自基础分析器，作为技术栈分析的统一入口。
+    内部调用 TechStackDetector 执行确定性检测。
+    
+    示例用法：
+        analyzer = TechStackAnalyzer()
+        result = analyzer.analyze(scan_result)
     """
     
     def __init__(self):
         """初始化技术栈分析器。"""
         self.detector = TechStackDetector()
+        logger.info("技术栈分析器已初始化")
     
-    def analyze(self, scan_result: Any) -> Any:
-        """
-        执行技术栈分析
+    def analyze(self, scan_result: RepositorySnapshot) -> ProjectTechStack:
+        """执行技术栈分析。
+        
+        这是技术栈分析的统一入口，内部调用检测器执行分析。
         
         Args:
-            scan_result: 扫描结果数据
+            scan_result: 仓库扫描结果
             
         Returns:
-            技术栈分析结果（当前返回空结构）
+            项目技术栈模型
+            
+        Raises:
+            Exception: 分析过程中发生的任何异常都会向上传播
+                      （由调用方决定如何处理）
         """
-        # 调用检测器进行分析
-        result = self.detector.detect(scan_result)
+        logger.info("开始技术栈分析")
         
-        # 暂时返回空结构
+        # 调用检测器执行确定性分析
+        result: ProjectTechStack = self.detector.detect(scan_result)
+        
+        logger.info("技术栈分析完成")
+        
         return result

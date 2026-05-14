@@ -120,8 +120,9 @@ class RepoResolver:
             
             return snapshot
             
-        finally:
-            # 分析结束后自动删除临时目录
+        except Exception:
+            # 如果扫描失败，也要清理临时目录
             logger.info("开始清理临时克隆目录")
             await self.github_cloner.cleanup()
             self.is_temp_clone = False
+            raise

@@ -15,9 +15,11 @@ if sys.platform == "win32":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 import typer
+import asyncio
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 from loguru import logger
 from pathlib import Path
 
@@ -25,6 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from src.models.base_models import AnalysisConfig, AnalysisResult, AnalysisStatus, RepositoryInfo
+from src.scanner import RepoResolver, RepositorySnapshot
 
 app = typer.Typer(
     name="ai-github-analyzer",
@@ -33,6 +36,284 @@ app = typer.Typer(
 )
 
 console = Console()
+
+
+# 特殊文件技术信号映射
+SPECIAL_FILE_SIGNALS = {
+    'dockerfile': 'Docker',
+    'package.json': 'Node.js',
+    'pom.xml': 'Maven / Java',
+    'build.gradle': 'Gradle / Java',
+    'go.mod': 'Go',
+    'requirements.txt': 'Python',
+    'pyproject.toml': 'Python',
+    'pnpm-lock.yaml': 'pnpm',
+    'yarn.lock': 'yarn',
+    'package-lock.json': 'npm',
+}
+
+# 文件类型映射
+FILE_TYPE_MAP = {
+    'readme.md': '项目说明',
+    'readme': '项目说明',
+    '.gitignore': '忽略文件',
+    '.env': '敏感配置',
+    '.env.example': '示例配置',
+    'dockerfile': '容器配置',
+    'docker-compose.yml': '容器配置',
+    'docker-compose.yaml': '容器配置',
+    'license': '许可证',
+    'license.md': '许可证',
+    'license.txt': '许可证',
+    'contributing.md': '贡献指南',
+    'changelog.md': '变更日志',
+    'changes.md': '变更日志',
+}
+
+# 构建配置文件映射
+BUILD_CONFIG_FILES = {
+    'package.json': 'Node.js',
+    'pom.xml': 'Maven/Java',
+    'build.gradle': 'Gradle/Java',
+    'go.mod': 'Go',
+    'requirements.txt': 'Python',
+    'pyproject.toml': 'Python',
+    'setup.py': 'Python',
+    'cargo.toml': 'Rust',
+    'gemfile': 'Ruby',
+    'composer.json': 'PHP',
+}
+
+
+def _get_file_signal(file_path: str, extension: str) -> str:
+    """
+    获取文件的技术信号
+    
+    Args:
+        file_path: 文件相对路径
+        extension: 文件后缀名
+        
+    Returns:
+        str: 技术信号（后缀或特殊标识）
+    """
+    # 提取文件名（不含路径）
+    file_name = Path(file_path).name.lower()
+    
+    # 检查是否是特殊文件
+    if file_name in SPECIAL_FILE_SIGNALS:
+        return SPECIAL_FILE_SIGNALS[file_name]
+    
+    # 特殊处理 .env.example 这类文件
+    if file_name.startswith('.env'):
+        return '配置'
+    
+    # 普通文件返回后缀
+    return extension if extension else '无'
+
+
+
+def _format_size(size_bytes: int) -> str:
+    """
+    格式化文件大小
+    
+    Args:
+        size_bytes: 文件大小（字节）
+        
+    Returns:
+        str: 格式化后的大小（如 12.5 KB, 13.2 MB）
+    """
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+    else:
+        return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
+
+
+def _get_file_type(file_name: str) -> str:
+    """
+    获取文件类型
+    
+    Args:
+        file_name: 文件名（不含路径）
+        
+    Returns:
+        str: 文件类型描述
+    """
+    file_name_lower = file_name.lower()
+    
+    # 检查特殊文件类型
+    if file_name_lower in FILE_TYPE_MAP:
+        return FILE_TYPE_MAP[file_name_lower]
+    
+    # 检查是否是构建配置文件
+    if file_name_lower in BUILD_CONFIG_FILES:
+        return '构建配置'
+    
+    # 普通文件
+    return '文件'
+
+
+def _calculate_dir_stats(snapshot: RepositorySnapshot, dir_relative_path: str) -> tuple:
+    """
+    计算目录的递归统计信息（基于真实仓库完整数据）
+    
+    Args:
+        snapshot: 仓库快照（必须包含完整未裁剪的文件和目录列表）
+        dir_relative_path: 目录相对路径
+        
+    Returns:
+        tuple: (总大小字节数, 子目录数, 文件数)
+    """
+    total_size = 0
+    subdirs = set()
+    files_count = 0
+    
+    # 规范化目录路径
+    dir_path_normalized = Path(dir_relative_path).as_posix() if dir_relative_path else ''
+    
+    # 遍历所有文件，递归统计属于该目录及其子目录的所有文件
+    for file_meta in snapshot.files:
+        file_path_normalized = Path(file_meta.relative_path).as_posix()
+        
+        # 检查文件是否在该目录下（包括所有子目录）
+        if dir_path_normalized == '':
+            # 根目录：统计所有文件
+            total_size += file_meta.size_bytes
+            files_count += 1
+        else:
+            # 子目录：检查文件路径是否以目录路径开头
+            # 例如：dir="src/agents", file="src/agents/tech_agent.py" ✓
+            # 例如：dir="src", file="src/agents/tech_agent.py" ✓
+            if file_path_normalized.startswith(dir_path_normalized + '/') or file_path_normalized == dir_path_normalized:
+                total_size += file_meta.size_bytes
+                files_count += 1
+    
+    # 遍历所有目录，递归统计所有后代子目录
+    for dir_meta in snapshot.directories:
+        if dir_meta.relative_path == dir_relative_path:
+            continue
+        
+        subdir_path_normalized = Path(dir_meta.relative_path).as_posix()
+        
+        # 检查是否是该目录的后代目录（包括直接子目录和更深层的子目录）
+        if dir_path_normalized == '':
+            # 根目录：统计所有目录
+            subdirs.add(dir_meta.relative_path)
+        else:
+            # 子目录：检查目录路径是否以当前目录路径开头
+            # 例如：current="src", subdir="src/agents" ✓
+            # 例如：current="src", subdir="src/agents/tech" ✓
+            if subdir_path_normalized.startswith(dir_path_normalized + '/'):
+                subdirs.add(dir_meta.relative_path)
+    
+    return total_size, len(subdirs), files_count
+
+
+def _display_snapshot(console: Console, snapshot: RepositorySnapshot):
+    """
+    显示仓库根目录概览（GitHub 风格）
+    
+    Args:
+        console: Rich 控制台
+        snapshot: 仓库快照
+    """
+    console.print("\n[bold green]✓ 仓库扫描完成！[/bold green]\n")
+    
+    # 基本信息
+    console.print(f"[bold]仓库名称：[/bold] {snapshot.repo_name}")
+    console.print(f"[bold]仓库路径：[/bold] {snapshot.repo_path}\n")
+    
+    # 根目录概览表格
+    console.print("[bold blue]📁 仓库根目录概览[/bold blue]\n")
+    
+    table = Table(show_header=True, header_style="bold cyan", show_lines=True)
+    table.add_column("名称", style="green", no_wrap=False)
+    table.add_column("类型", style="yellow", width=12)
+    table.add_column("后缀/技术信号", style="magenta", width=18)
+    table.add_column("大小", style="cyan", justify="right", width=12)
+    # table.add_column("信息", style="white", justify="left")
+    
+    # 收集根目录下的所有项（文件和目录）
+    root_items = []
+    
+    # 添加根目录下的文件
+    for file_meta in snapshot.files:
+        file_path = Path(file_meta.relative_path)
+        # 只处理根目录下的文件（没有父目录或父目录是 '.'）
+        if file_path.parent == Path('.') or str(file_path.parent) == '.':
+            root_items.append(('file', file_meta))
+    
+    # 添加根目录下的直接子目录
+    for dir_meta in snapshot.directories:
+        dir_path = Path(dir_meta.relative_path)
+        # 只处理根目录下的直接子目录
+        if dir_path.parent == Path('.') or str(dir_path.parent) == '.':
+            root_items.append(('dir', dir_meta))
+    
+    # 按名称排序（目录优先，然后按字母顺序）
+    def sort_key(item):
+        item_type, item_meta = item
+        name = item_meta.relative_path.split('/')[0].split('\\')[0]
+        # 目录排在前面 (0)，文件排在后面 (1)
+        type_order = 0 if item_type == 'dir' else 1
+        return (type_order, name.lower())
+    
+    root_items.sort(key=sort_key)
+    
+    # 渲染每一行
+    for item_type, item_meta in root_items:
+        if item_type == 'file':
+            file_meta = item_meta
+            file_name = Path(file_meta.relative_path).name
+            
+            # 获取文件类型
+            file_type = _get_file_type(file_name)
+            
+            # 获取技术信号
+            signal = _get_file_signal(file_meta.relative_path, file_meta.extension)
+            
+            # 格式化大小
+            size_str = _format_size(file_meta.size_bytes)
+            
+            # 信息列
+            info = '文件'
+            
+            table.add_row(
+                file_name,
+                file_type,
+                signal,
+                size_str,
+                # info
+            )
+        else:
+            dir_meta = item_meta
+            dir_name = Path(dir_meta.relative_path).name
+            
+            # 计算目录统计信息
+            total_size, subdir_count, file_count = _calculate_dir_stats(
+                snapshot, 
+                dir_meta.relative_path
+            )
+            
+            # 格式化大小
+            size_str = _format_size(total_size)
+            
+            # 信息列：x目录 / x文件
+            info = f"{subdir_count}目录 / {file_count}文件"
+            
+            table.add_row(
+                f"📁 {dir_name}/",
+                '目录',
+                '',  # 目录不显示后缀
+                size_str,
+                # info
+            )
+    
+    console.print(table)
+    console.print()
 
 
 def setup_logging():
@@ -83,93 +364,61 @@ def analyze(
     """
     分析 GitHub 仓库。
     
-    此命令执行全面分析，包括：
-    - 仓库结构扫描
-    - 技术栈分类
-    - 架构模式检测
-    - 代码质量评估
-    - AI 驱动的建议
+    Phase 1 - Repository Scanner:
+    - 扫描仓库结构
+    - 生成 RepositorySnapshot
+    - 支持本地路径和 GitHub URL
     """
     logger.info(f"开始分析：{repo_url}")
     
     # 显示欢迎面板
     console.print(
         Panel.fit(
-            f"[bold blue]正在分析仓库[/bold blue]\n[cyan]{repo_url}[/cyan]",
-            title="🚀 AI GitHub Analyzer",
+            f"[bold blue]正在扫描仓库[/bold blue]\n[cyan]{repo_url}[/cyan]",
+            title="🚀 AI GitHub Analyzer - Phase 1",
             border_style="blue",
         )
     )
     
-    # 创建分析配置
-    config = AnalysisConfig(
-        repo_url=repo_url,
-        output_format=output_format,
-    )
-    
-    logger.debug(f"分析配置：{config.model_dump()}")
-    
-    # 模拟分析工作流（占位符，待后续实现）
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        task = progress.add_task("[cyan]正在扫描仓库...", total=None)
+    try:
+        # 创建仓库解析器
+        resolver = RepoResolver()
         
-        # TODO: 实现实际分析工作流
-        # 1. 扫描器模块：提取仓库结构
-        # 2. 分类器模块：识别技术栈
-        # 3. 上下文构建器：构建综合上下文
-        # 4. 代理：执行专门分析
-        # 5. 验证器：验证结果
-        # 6. 渲染器：生成输出
+        # 异步执行扫描
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("[cyan]正在扫描仓库...", total=None)
+            
+            # 运行异步扫描
+            snapshot = asyncio.run(resolver.resolve(repo_url))
+            
+            progress.update(task, description="[green]扫描完成！")
         
-        progress.update(task, description="[green]分析完成！")
-    
-    # 创建占位结果
-    # 骨架安全设计：为未实现的模块提供合理的默认值
-    placeholder_repo_info = RepositoryInfo(
-        url=repo_url,
-        name="placeholder",
-        owner="placeholder",
-        description="仓库信息待扫描器实现",
-    )
-    
-    result = AnalysisResult(
-        repo_info=placeholder_repo_info,
-        status=AnalysisStatus.COMPLETED,
-        summary="分析框架已初始化，功能待实现。",
-        tech_stack=["Python", "Typer", "Rich", "Loguru", "Pydantic"],
-        architecture_patterns=["整洁架构", "模块化设计"],
-        recommendations=[
-            "实现扫描器模块以提取仓库结构",
-            "构建技术栈检测的分类器",
-            "创建用于专门分析任务的 AI 代理",
-            "添加验证层以确保结果质量",
-        ],
-    )
-    
-    # 显示结果
-    console.print("\n[bold green]✓ 分析完成！[/bold green]\n")
-    console.print(f"[bold]状态：[/bold] {result.status.value}")
-    console.print(f"[bold]摘要：[/bold] {result.summary}\n")
-    
-    console.print("[bold]检测到的技术栈：[/bold]")
-    for tech in result.tech_stack:
-        console.print(f"  • {tech}")
-    
-    console.print("\n[bold]架构模式：[/bold]")
-    for pattern in result.architecture_patterns:
-        console.print(f"  • {pattern}")
-    
-    console.print("\n[bold yellow]下一步：[/bold yellow]")
-    for i, rec in enumerate(result.recommendations, 1):
-        console.print(f"  {i}. {rec}")
-    
-    logger.info("分析成功完成")
-    
-    return result
+        # 显示扫描结果
+        _display_snapshot(console, snapshot)
+        
+        logger.info("仓库扫描成功完成")
+        
+        return snapshot
+        
+    except ValueError as e:
+        error_msg = str(e)
+        console.print(f"\n[bold red]错误：[/bold red] {error_msg}")
+        logger.error(error_msg)
+        sys.exit(1)
+    except RuntimeError as e:
+        error_msg = str(e)
+        console.print(f"\n[bold red]运行时错误：[/bold red] {error_msg}")
+        logger.error(error_msg)
+        sys.exit(1)
+    except Exception as e:
+        error_msg = f"未知错误：{str(e)}"
+        console.print(f"\n[bold red]错误：[/bold red] {error_msg}")
+        logger.exception(error_msg)
+        sys.exit(1)
 
 
 @app.command()

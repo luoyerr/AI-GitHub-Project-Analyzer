@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from src.models.base_models import AnalysisConfig, AnalysisResult, AnalysisStatus, RepositoryInfo
 from src.scanner import RepoResolver, RepositorySnapshot
+from src.analyzer.tech_stack import TechStackDetector
 
 app = typer.Typer(
     name="ai-github-analyzer",
@@ -316,6 +317,67 @@ def _display_snapshot(console: Console, snapshot: RepositorySnapshot):
     console.print()
 
 
+def _display_tech_stack(console: Console, tech_stack):
+    """
+    显示技术栈分析结果
+    
+    Args:
+        console: Rich 控制台
+        tech_stack: 技术栈模型
+    """
+    from rich.panel import Panel
+    
+    console.print("[bold green]✨ 技术栈分析结果[/bold green]\n")
+    
+    # 创建面板内容
+    lines = []
+    
+    # 编程语言
+    if tech_stack.languages:
+        lines.append(f"[bold]编程语言：[/bold] {', '.join(tech_stack.languages)}")
+    
+    # 框架
+    if tech_stack.frameworks:
+        lines.append(f"[bold]框架：[/bold] {', '.join(tech_stack.frameworks)}")
+    
+    # 库
+    if tech_stack.libraries:
+        lines.append(f"[bold]库：[/bold] {', '.join(tech_stack.libraries)}")
+    
+    # 构建工具
+    if tech_stack.build_tools:
+        lines.append(f"[bold]构建工具：[/bold] {', '.join(tech_stack.build_tools)}")
+    
+    # 包管理器
+    if tech_stack.package_managers:
+        lines.append(f"[bold]包管理器：[/bold] {', '.join(tech_stack.package_managers)}")
+    
+    # CI/CD
+    if tech_stack.ci_cd:
+        lines.append(f"[bold]CI/CD：[/bold] {', '.join(tech_stack.ci_cd)}")
+    
+    # 容器化
+    if tech_stack.containers:
+        lines.append(f"[bold]容器化：[/bold] {', '.join(tech_stack.containers)}")
+    
+    # 云原生
+    if tech_stack.cloud_native:
+        lines.append(f"[bold]云原生：[/bold] {', '.join(tech_stack.cloud_native)}")
+    
+    # 测试工具
+    if tech_stack.testing_tools:
+        lines.append(f"[bold]测试工具：[/bold] {', '.join(tech_stack.testing_tools)}")
+    
+    # 可信度
+    confidence_percent = int(tech_stack.confidence * 100)
+    lines.append(f"\n[bold]识别可信度：[/bold] {confidence_percent}%")
+    
+    # 显示面板
+    content = "\n".join(lines)
+    console.print(Panel(content, title="技术栈详情", border_style="green"))
+    console.print()
+
+
 def setup_logging():
     """配置 loguru 日志系统。"""
     logger.remove()  # 移除默认处理器
@@ -399,6 +461,15 @@ def analyze(
         
         # 显示扫描结果
         _display_snapshot(console, snapshot)
+        
+        # 执行技术栈检测
+        console.print("\n[bold blue]🔍 开始技术栈分析...[/bold blue]\n")
+        
+        detector = TechStackDetector()
+        tech_stack = detector.detect(snapshot)
+        
+        # 显示技术栈分析结果
+        _display_tech_stack(console, tech_stack)
         
         logger.info("仓库扫描成功完成")
         

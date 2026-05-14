@@ -20,10 +20,10 @@
 
 from loguru import logger
 
-from models import ProjectTechStack
-from scanner import RepositorySnapshot
 from ..base import BaseAnalyzer
 from .detector import TechStackDetector
+from src.models.tech_stack import ProjectTechStack
+from src.scanner.models import RepositorySnapshot
 
 
 class TechStackAnalyzer(BaseAnalyzer):

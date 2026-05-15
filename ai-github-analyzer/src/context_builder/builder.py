@@ -166,6 +166,36 @@ class ContextBuilder:
             for cf in context_files
         ]
 
+        # 构建目录树文本表示
+        dir_tree_lines = []
+        for d in snapshot.directories:
+            indent = "  " * len(Path(d.relative_path).parts)
+            dir_tree_lines.append(f"{indent}{d.relative_path}/")
+        directory_tree = "\n".join(dir_tree_lines) if dir_tree_lines else "无目录信息"
+
+        # 构建关键文件列表
+        key_files_list = [
+            f"{cf.relative_path} ({cf.language}, {cf.size} bytes, priority={cf.priority.value})"
+            for cf in context_files
+        ]
+
+        # 构建代码样本（拼接所有文件内容，限制总长度）
+        code_samples = []
+        total_code_length = 0
+        max_code_length = 50000  # 限制代码样本总长度
+        
+        for cf in context_files:
+            if cf.content and cf.category in [FileCategory.SOURCE, FileCategory.ENTRY, FileCategory.CONFIG]:
+                sample = f"\n=== File: {cf.relative_path} ===\n{cf.content}\n"
+                if total_code_length + len(sample) > max_code_length:
+                    sample = sample[:max_code_length - total_code_length] + "\n... (truncated)"
+                    code_samples.append(sample)
+                    break
+                code_samples.append(sample)
+                total_code_length += len(sample)
+        
+        sampled_code = "\n".join(code_samples) if code_samples else "无代码样本"
+
         # 转换目录列表
         dir_contexts = [
             DirectoryContext(
@@ -193,5 +223,8 @@ class ContextBuilder:
             directories=dir_contexts,
             languages=tech_stack.languages,
             tech_stack=ts_context,
+            directory_tree=directory_tree,
+            key_files=key_files_list,
+            sampled_code=sampled_code,
             token_budget=50000,  # 默认预算
         )

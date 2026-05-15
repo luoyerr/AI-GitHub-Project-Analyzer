@@ -85,6 +85,14 @@ CONFIG_PATTERNS: List[str] = [
     "babel.config.js",     # Babel 转译配置
     "tsconfig.json",       # TypeScript 配置
     "docker-compose.yml",  # Docker Compose 配置
+    "pyproject.toml",      # Python 项目配置
+    ".env.example",        # 环境变量示例
+    "setup.py",            # Python 安装配置
+    "requirements.txt",    # Python 依赖配置
+    "package.json",        # Node.js 包配置
+    "pom.xml",             # Maven 配置
+    "build.gradle",        # Gradle 配置
+    "go.mod",              # Go 模块配置
 ]
 
 # ==================== 核心业务目录模式规则 ====================

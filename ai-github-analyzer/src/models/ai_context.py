@@ -81,6 +81,11 @@ class AIContext(BaseModel):
 
     tech_stack: Optional[TechStackContext] = Field(default=None, description="技术栈上下文")
 
+    # 新增字段：用于 Prompt 构建
+    directory_tree: str = Field(default="", description="目录树文本表示")
+    key_files: List[str] = Field(default_factory=list, description="关键文件路径列表")
+    sampled_code: str = Field(default="", description="代码样本拼接字符串")
+
     selected_files: List[SelectedFileContext] = Field(
         default_factory=list, description="经过优先级筛选的文件列表"
     )

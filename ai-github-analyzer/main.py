@@ -32,6 +32,7 @@ from src.analyzer.tech_stack import TechStackAnalyzer
 from src.context_builder import ContextBuilder
 from src.ai_engine.orchestrator import AIOrchestrator
 from src.report.generator import MarkdownReportGenerator
+from src.ui import CLIDashboard
 
 app = typer.Typer(
     name="ai-github-analyzer",
@@ -499,11 +500,32 @@ def analyze(
         console.print(Panel.fit("[bold blue]Phase 4: AI 分析[/bold blue]", border_style="blue"))
         phase4_start = time.time()
         
-        orchestrator = AIOrchestrator()
+        # 获取任务列表（从 DAG 调度器）
+        from src.ai_engine.dag import DAGScheduler
+        dag_scheduler = DAGScheduler()
+        task_names = dag_scheduler.get_execution_order()
+        
+        # 创建 Dashboard
+        dashboard = CLIDashboard(
+            repo_name=snapshot.repo_name,
+            model_name="qwen3-coder-free",  # TODO: 从配置读取
+            provider_name="qwen",  # TODO: 从配置读取
+            task_names=task_names,
+            console=console,
+        )
+        
+        # 创建 Orchestrator 并传入 Dashboard
+        orchestrator = AIOrchestrator(dashboard=dashboard)
         analysis_result = orchestrator.run(ai_context)
         
         phase4_elapsed = time.time() - phase4_start
-        console.print(f"[bold green]✓ Phase 4 完成，耗时: {phase4_elapsed:.2f}秒[/bold green]\n")
+        
+        # 显示完成摘要
+        report_path = None
+        dashboard.show_summary(
+            total_duration=phase4_elapsed,
+            report_path="等待报告生成...",
+        )
         
         # ==================== Phase 5: 报告生成 ====================
         console.print(Panel.fit("[bold blue]Phase 5: 报告生成[/bold blue]", border_style="blue"))
@@ -517,6 +539,12 @@ def analyze(
             output_path = result['output_path']
             console.print(f"[bold green]✓ 报告已生成: {output_path}[/bold green]")
             console.print(f"[dim]路径: {output_path.absolute()}[/dim]")
+            
+            # 更新 Dashboard 摘要中的报告路径
+            dashboard.show_summary(
+                total_duration=phase4_elapsed,
+                report_path=str(output_path.absolute()),
+            )
         else:
             console.print(f"[bold red]✗ 报告生成失败: {result.get('error')}[/bold red]")
         

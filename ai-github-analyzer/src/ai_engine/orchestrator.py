@@ -26,6 +26,7 @@ from .registry import TaskRegistry
 from .dag import DAGScheduler
 from .llm_client import LLMClient
 from .prompt_manager import PromptManager
+from ..ui import CLIDashboard
 
 
 class AIOrchestrator:
@@ -55,13 +56,18 @@ class AIOrchestrator:
     - 高扩展：兼容未来的retry、parallel、DAG、缓存
     """
     
-    def __init__(self) -> None:
-        """初始化AI总调度器。"""
+    def __init__(self, dashboard: Optional[CLIDashboard] = None) -> None:
+        """初始化AI总调度器。
+        
+        Args:
+            dashboard: CLI Dashboard 实例，用于显示进度。如果为 None 则不显示 UI。
+        """
         self._registry = TaskRegistry()
         self._dag_scheduler = DAGScheduler()
         self._prompt_results: Dict[str, PromptResult] = {}
         self._llm_client = LLMClient()
         self._prompt_manager = PromptManager()
+        self._dashboard = dashboard
         logger.info("AI总调度器初始化完成")
     
     def run(self, context: AIContext) -> AnalysisResult:
@@ -84,9 +90,22 @@ class AIOrchestrator:
         execution_order = self._dag_scheduler.get_execution_order()
         logger.info(f"任务执行顺序: {execution_order}")
         
-        # 顺序执行每个任务
-        for task_name in execution_order:
-            self._execute_single_task(task_name, context)
+        # 启动 Dashboard（如果提供）
+        if self._dashboard:
+            self._dashboard.start()
+        
+        try:
+            # 顺序执行每个任务
+            for task_name in execution_order:
+                self._execute_single_task(task_name, context)
+            
+            # 标记 Dashboard 完成
+            if self._dashboard:
+                self._dashboard.finish()
+        finally:
+            # 确保 Dashboard 停止
+            if self._dashboard:
+                self._dashboard.stop()
         
         # 聚合结果
         elapsed_time = time.time() - start_time
@@ -106,6 +125,10 @@ class AIOrchestrator:
         task_start_time = time.time()
         logger.info(f"开始执行任务: {task_name}")
         
+        # 通知 Dashboard 任务开始
+        if self._dashboard:
+            self._dashboard.start_task(task_name)
+        
         try:
             # 获取任务实例
             task = self._registry.get_task(task_name)
@@ -122,13 +145,6 @@ class AIOrchestrator:
             
             prompt = self._prompt_manager.build_prompt(template_name, variables)
             
-            # DEBUG: 打印 Prompt
-            print("=" * 80)
-            print(f"[PROMPT] {task_name}")
-            print(f"Prompt length: {len(prompt)} characters")
-            print(f"Prompt preview:\n{prompt[:800]}...")
-            print("=" * 80)
-            
             if not prompt or len(prompt.strip()) == 0:
                 raise ValueError(f"Prompt 为空: {template_name}")
             
@@ -142,21 +158,6 @@ class AIOrchestrator:
                 max_tokens=4000
             )
             
-            # DEBUG: 打印 LLM 原始响应
-            print("=" * 80)
-            print(f"[LLM RESPONSE] {task_name}")
-            print(f"Success: {llm_response.success}")
-            print(f"Model: {llm_response.model}")
-            print(f"Token usage: {llm_response.token_usage}")
-            print(f"Elapsed time: {llm_response.elapsed_time:.2f}s")
-            if llm_response.error_message:
-                print(f"Error: {llm_response.error_message}")
-            if llm_response.content:
-                print(f"Content preview:\n{llm_response.content[:800]}...")
-            else:
-                print("Content: None")
-            print("=" * 80)
-            
             if not llm_response.success:
                 raise Exception(f"LLM 调用失败: {llm_response.error_message}")
             
@@ -166,13 +167,6 @@ class AIOrchestrator:
             # ===== Step 3: 解析响应 =====
             logger.info(f"[{task_name}] 解析 LLM 响应")
             result_content = llm_response.content
-            
-            # DEBUG: 打印解析结果
-            print("=" * 80)
-            print(f"[PARSED RESULT] {task_name}")
-            print(f"Content length: {len(result_content)}")
-            print(f"Content preview:\n{result_content[:500]}...")
-            print("=" * 80)
             
             # 计算耗时
             elapsed_time = time.time() - task_start_time
@@ -188,12 +182,21 @@ class AIOrchestrator:
             # 保存结果
             self._prompt_results[task_name] = prompt_result
             
+            # 通知 Dashboard 任务完成
+            if self._dashboard:
+                self._dashboard.finish_task(task_name, elapsed_time)
+            
             logger.info(f"任务 {task_name} 执行成功，耗时: {elapsed_time:.2f}秒")
             
         except Exception as e:
             # 处理失败
             elapsed_time = time.time() - task_start_time
             logger.exception(f"任务 {task_name} 执行异常")
+            
+            # 通知 Dashboard 任务失败
+            if self._dashboard:
+                self._dashboard.fail_task(task_name, str(e), elapsed_time)
+            
             self._handle_failure(task_name, e, elapsed_time)
     
     def _handle_failure(self, task_name: str, error: Exception, elapsed_time: float) -> None:
@@ -238,17 +241,6 @@ class AIOrchestrator:
         """
         logger.info("开始构建最终分析结果")
         
-        # DEBUG: 打印所有 PromptResult
-        print("=" * 80)
-        print("[ALL PROMPT RESULTS]")
-        for task_name, result in self._prompt_results.items():
-            print(f"\nTask: {task_name}")
-            print(f"  Success: {result.success}")
-            print(f"  Content length: {len(result.content) if result.content else 0}")
-            if result.error_message:
-                print(f"  Error: {result.error_message}")
-        print("=" * 80)
-        
         # 从PromptResult中提取各个分析结果
         analysis_result = AnalysisResult(
             repo_name=repo_name,
@@ -263,20 +255,6 @@ class AIOrchestrator:
             learning_path=self._extract_learning_path(),
             elapsed_time=elapsed_time,
         )
-        
-        # DEBUG: 打印最终分析结果摘要
-        print("=" * 80)
-        print("[FINAL ANALYSIS RESULT]")
-        print(f"Repo: {analysis_result.repo_name}")
-        print(f"Tech Stack: {analysis_result.tech_stack}")
-        print(f"Directory Structure: {analysis_result.directory_structure is not None}")
-        print(f"Core Modules: {analysis_result.core_modules is not None}")
-        print(f"Startup Flow: {analysis_result.startup_flow is not None}")
-        print(f"Config Analysis: {analysis_result.config_analysis is not None}")
-        print(f"Risks: {analysis_result.risks is not None}")
-        print(f"Architecture Diagram: {analysis_result.architecture_diagram is not None}")
-        print(f"Learning Path: {analysis_result.learning_path is not None}")
-        print("=" * 80)
         
         logger.info(f"分析结果构建完成，包含 {self._count_successful_tasks()} 个成功任务")
         return analysis_result

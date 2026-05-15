@@ -106,6 +106,10 @@ CORE_MODULE_PATTERNS: List[str] = [
     "manager",             # 管理器
     "repository",          # 数据访问层
     "dao",                 # 数据访问对象
+    "src",                 # 源代码目录（通用）
+    "lib",                 # 库代码目录
+    "packages",            # 多包项目目录
+    "modules",             # 模块目录
 ]
 
 # ==================== 文档文件模式规则 ====================

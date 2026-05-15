@@ -138,10 +138,55 @@ class AIOrchestrator:
             
             # ===== Step 1: 构建 Prompt =====
             template_name = task.get_prompt_template()
+            
+            # 准备结构化的 Prompt 变量（修复：传递完整上下文）
             variables = {
                 "repo_name": context.repo_name,
-                "context": str(context),
             }
+            
+            # 添加目录树信息
+            if hasattr(context, 'directories') and context.directories:
+                dir_tree_lines = []
+                for d in context.directories[:50]:  # 限制最多50个目录
+                    dir_tree_lines.append(d.path)
+                variables['directory_tree'] = '\n'.join(dir_tree_lines)
+            else:
+                variables['directory_tree'] = "未检测到目录树信息"
+            
+            # 添加关键文件列表
+            if hasattr(context, 'files') and context.files:
+                key_files_list = []
+                for f in context.files[:30]:  # 限制最多30个文件
+                    key_files_list.append(f"{f.file_path} ({f.language}, {f.size_bytes} bytes)")
+                variables['key_files'] = '\n'.join(key_files_list)
+            else:
+                variables['key_files'] = "未检测到关键文件"
+            
+            # 添加技术栈信息
+            if hasattr(context, 'tech_stack') and context.tech_stack:
+                ts_parts = []
+                if context.tech_stack.languages:
+                    ts_parts.append(f"语言: {', '.join(context.tech_stack.languages)}")
+                if context.tech_stack.frameworks:
+                    ts_parts.append(f"框架: {', '.join(context.tech_stack.frameworks)}")
+                if context.tech_stack.dependencies:
+                    ts_parts.append(f"依赖: {', '.join(context.tech_stack.dependencies[:20])}")
+                variables['detected_tech_stack'] = '\n'.join(ts_parts) if ts_parts else "未检测到技术栈"
+            else:
+                variables['detected_tech_stack'] = "未检测到技术栈信息"
+            
+            # 添加代码样本（重要文件的内容）
+            if hasattr(context, 'files') and context.files:
+                code_samples = []
+                for f in context.files[:5]:  # 只取前5个文件的内容作为样本
+                    if f.content and len(f.content) < 2000:  # 只包含小文件
+                        code_samples.append(f"=== {f.file_path} ===\n{f.content[:1000]}")
+                variables['sampled_code'] = '\n\n'.join(code_samples) if code_samples else "未检测到代码样本"
+            else:
+                variables['sampled_code'] = "未检测到代码样本"
+            
+            # 保留完整上下文作为兜底
+            variables['context'] = str(context)
             
             prompt = self._prompt_manager.build_prompt(template_name, variables)
             
@@ -154,7 +199,7 @@ class AIOrchestrator:
             llm_response = self._llm_client.generate(
                 prompt=prompt,
                 system_prompt=system_prompt,
-                temperature=0.7,
+                temperature=0.3,  # 降低 temperature 以减少编造（从 0.7 改为 0.3）
                 max_tokens=4000
             )
             

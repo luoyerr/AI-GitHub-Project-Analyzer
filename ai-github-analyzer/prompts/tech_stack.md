@@ -14,6 +14,28 @@
 
 ## 输出要求
 
+**必须严格按照以下 JSON 格式返回结果**：
+
+```json
+{
+  "languages": ["Python 3.12", "TypeScript"],
+  "frameworks": ["FastAPI", "React"],
+  "libraries": ["pydantic", "loguru"],
+  "build_tools": ["Poetry"],
+  "package_managers": ["pip"],
+  "databases": [],
+  "ci_cd": [],
+  "containers": ["Docker"],
+  "cloud_native": [],
+  "testing_tools": [],
+  "confidence": 0.8,
+  "evidence": {
+    "languages": ["来自 pyproject.toml"],
+    "frameworks": ["来自 requirements.txt"]
+  }
+}
+```
+
 识别以下内容：
 
 - 编程语言及版本
@@ -30,3 +52,4 @@
 - 标记不确定性
 - 提供证据来源
 - **重要**：必须基于实际的项目信息进行分析，不要返回“请提供xxx”之类的提示
+- **如果某个字段没有信息，使用空数组 []，不要编造**

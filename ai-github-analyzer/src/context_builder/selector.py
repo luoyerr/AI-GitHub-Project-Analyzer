@@ -373,7 +373,7 @@ class ContextSelector:
         selected = []
         # 按目录分组，限制每个目录的文件数量
         dir_file_count: Dict[str, int] = {}
-        max_files_per_dir = 8  # 单目录最多 8 个文件
+        max_files_per_dir = 15  # 单目录最多 15 个文件（从 8 增加到 15）
 
         for file_meta in files:
             file_path = file_meta.relative_path.lower()

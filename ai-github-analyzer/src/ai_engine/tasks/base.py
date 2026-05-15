@@ -17,6 +17,25 @@ except ImportError:
     from ...models.task_context import TaskContext
     from ...models.prompt_result import PromptResult
 
+# 延迟导入 LLMClient 和 PromptManager，避免循环依赖
+def _get_llm_client():
+    """获取 LLM 客户端实例（延迟加载）。"""
+    try:
+        from ..llm_client import LLMClient
+        return LLMClient()
+    except Exception as e:
+        logger.error(f"无法创建 LLM 客户端: {e}")
+        raise
+
+def _get_prompt_manager():
+    """获取 Prompt 管理器实例（延迟加载）。"""
+    try:
+        from ..prompt_manager import PromptManager
+        return PromptManager()
+    except Exception as e:
+        logger.error(f"无法创建 Prompt 管理器: {e}")
+        raise
+
 
 class BaseTask(ABC):
     """
@@ -68,6 +87,134 @@ class BaseTask(ABC):
             Exception: 当任务执行失败时
         """
         pass
+    
+    def execute_with_llm(self, context: TaskContext) -> Any:
+        """
+        通用 LLM 执行流程（模板方法）。
+        
+        标准流程：
+        1. 构建 Prompt
+        2. 调用 LLM
+        3. 解析响应
+        4. 返回结构化结果
+        
+        Args:
+            context: 任务执行上下文
+            
+        Returns:
+            Any: 任务执行结果
+            
+        Raises:
+            Exception: 当任务执行失败时
+        """
+        task_name = self.get_prompt_template()
+        
+        # Step 1: 构建 Prompt
+        logger.info(f"[{self.name}] Step 1: 构建 Prompt")
+        prompt_manager = _get_prompt_manager()
+        
+        # 准备变量
+        variables = self._prepare_prompt_variables(context)
+        
+        # 构建最终 Prompt
+        prompt = prompt_manager.build_prompt(task_name, variables)
+        
+        # DEBUG: 打印 Prompt
+        print("=" * 80)
+        print(f"[PROMPT] {self.name}")
+        print(f"Prompt length: {len(prompt)} characters")
+        print(f"Prompt preview: {prompt[:500]}...")
+        print("=" * 80)
+        
+        if not prompt or len(prompt.strip()) == 0:
+            raise ValueError(f"Prompt 为空: {task_name}")
+        
+        # Step 2: 调用 LLM
+        logger.info(f"[{self.name}] Step 2: 调用 LLM")
+        llm_client = _get_llm_client()
+        
+        system_prompt = prompt_manager.get_system_prompt()
+        llm_response = llm_client.generate(
+            prompt=prompt,
+            system_prompt=system_prompt,
+            temperature=0.7,
+            max_tokens=4000
+        )
+        
+        # DEBUG: 打印 LLM 原始响应
+        print("=" * 80)
+        print(f"[LLM RESPONSE] {self.name}")
+        print(f"Success: {llm_response.success}")
+        print(f"Model: {llm_response.model}")
+        print(f"Token usage: {llm_response.token_usage}")
+        print(f"Elapsed time: {llm_response.elapsed_time:.2f}s")
+        if llm_response.error_message:
+            print(f"Error: {llm_response.error_message}")
+        print(f"Content preview: {str(llm_response.content)[:500]}..." if llm_response.content else "Content: None")
+        print("=" * 80)
+        
+        if not llm_response.success:
+            raise Exception(f"LLM 调用失败: {llm_response.error_message}")
+        
+        if not llm_response.content:
+            raise Exception("LLM 返回内容为空")
+        
+        # Step 3: 解析响应
+        logger.info(f"[{self.name}] Step 3: 解析 LLM 响应")
+        parsed_result = self._parse_llm_response(llm_response.content, context)
+        
+        # DEBUG: 打印解析结果
+        print("=" * 80)
+        print(f"[PARSED RESULT] {self.name}")
+        print(f"Result type: {type(parsed_result)}")
+        print(f"Result: {parsed_result}")
+        print("=" * 80)
+        
+        # Step 4: 验证结果
+        if not self.validate_result(parsed_result):
+            logger.warning(f"[{self.name}] 结果验证失败，但仍返回")
+        
+        logger.info(f"[{self.name}] 任务执行完成")
+        return parsed_result
+    
+    def _prepare_prompt_variables(self, context: TaskContext) -> Dict[str, Any]:
+        """
+        准备 Prompt 所需的变量。
+        
+        子类可以重写此方法以提供自定义变量。
+        
+        Args:
+            context: 任务执行上下文
+            
+        Returns:
+            Dict[str, Any]: 变量字典
+        """
+        # 默认变量
+        variables = {
+            "repo_name": context.ai_context.repo_name if context.ai_context else "未知仓库",
+            "context": str(context.ai_context) if context.ai_context else "无上下文",
+        }
+        return variables
+    
+    def _parse_llm_response(self, content: str, context: TaskContext) -> Any:
+        """
+        解析 LLM 响应为结构化结果。
+        
+        子类必须实现此方法以解析特定格式的响应。
+        
+        Args:
+            content: LLM 返回的文本内容
+            context: 任务执行上下文
+            
+        Returns:
+            Any: 结构化结果
+            
+        Raises:
+            Exception: 当解析失败时
+        """
+        # 默认实现：直接返回原始内容
+        # 子类应该重写此方法
+        return content
     
     @abstractmethod
     def get_prompt_template(self) -> str:

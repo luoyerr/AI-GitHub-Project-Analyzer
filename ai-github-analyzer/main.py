@@ -514,7 +514,9 @@ def analyze(
         result = report_generator.generate(analysis_result, repo_path)
         
         if result["success"]:
-            console.print(f"[bold green]✓ 报告已生成: {result['output_path']}[/bold green]")
+            output_path = result['output_path']
+            console.print(f"[bold green]✓ 报告已生成: {output_path}[/bold green]")
+            console.print(f"[dim]路径: {output_path.absolute()}[/dim]")
         else:
             console.print(f"[bold red]✗ 报告生成失败: {result.get('error')}[/bold red]")
         

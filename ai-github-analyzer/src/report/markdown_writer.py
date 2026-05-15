@@ -63,7 +63,8 @@ class MarkdownWriter:
         if output_path:
             file_path = output_path
         elif repo_path:
-            file_path = repo_path / MarkdownWriter.DEFAULT_FILENAME
+            # 使用新的默认路径逻辑（reports/{repo_name}/PROJECT_ANALYSIS.md）
+            file_path = MarkdownWriter.get_default_output_path(repo_path)
         else:
             # 默认使用当前工作目录
             file_path = Path.cwd() / MarkdownWriter.DEFAULT_FILENAME
@@ -145,9 +146,45 @@ class MarkdownWriter:
             repo_path: 仓库根目录路径。如果未提供，使用当前工作目录。
 
         返回:
-            默认的完整文件路径。
+            默认的完整文件路径（项目根目录/reports/{repo_name}/PROJECT_ANALYSIS.md）。
         """
         if repo_path:
-            return repo_path / MarkdownWriter.DEFAULT_FILENAME
+            # 从 repo_path 提取仓库名称
+            repo_name = repo_path.name
+            
+            # 获取项目根目录（ai-github-analyzer 目录）
+            # repo_path 可能是 temp_repos/{repo_name}，需要向上找到项目根目录
+            project_root = MarkdownWriter._find_project_root(repo_path)
+            
+            # 构建报告路径：项目根目录/reports/{repo_name}/PROJECT_ANALYSIS.md
+            report_dir = project_root / "reports" / repo_name
+            return report_dir / MarkdownWriter.DEFAULT_FILENAME
         else:
             return Path.cwd() / MarkdownWriter.DEFAULT_FILENAME
+    
+    @staticmethod
+    def _find_project_root(current_path: Path) -> Path:
+        """
+        查找项目根目录（包含 ai-github-analyzer 目录的父目录）。
+        
+        参数:
+            current_path: 当前路径（可能是 temp_repos/{repo_name}）
+            
+        返回:
+            项目根目录路径
+        """
+        # 从当前路径向上查找，直到找到包含 'ai-github-analyzer' 的目录
+        path = current_path
+        max_levels = 10  # 防止无限循环
+        
+        for _ in range(max_levels):
+            if path.name == 'ai-github-analyzer':
+                return path
+            parent = path.parent
+            if parent == path:  # 到达根目录
+                break
+            path = parent
+        
+        # 如果没找到，返回当前路径的父目录（保守策略）
+        logger.warning(f"未能找到项目根目录，使用当前路径的父目录: {current_path.parent}")
+        return current_path.parent

@@ -112,6 +112,8 @@ class MarkdownReportGenerator:
             logger.info("步骤 4/4: 写入文件...")
             output_file = self._write_file(formatted_content, repo_path, output_path)
             logger.success(f"文件写入完成: {output_file}")
+            logger.success(f"报告生成成功")
+            logger.success(f"路径: {output_file.absolute()}")
 
             # 计算耗时
             elapsed_time = time.time() - start_time

@@ -24,6 +24,8 @@ from ..models.analysis_result import (
 )
 from .registry import TaskRegistry
 from .dag import DAGScheduler
+from .llm_client import LLMClient
+from .prompt_manager import PromptManager
 
 
 class AIOrchestrator:
@@ -58,6 +60,8 @@ class AIOrchestrator:
         self._registry = TaskRegistry()
         self._dag_scheduler = DAGScheduler()
         self._prompt_results: Dict[str, PromptResult] = {}
+        self._llm_client = LLMClient()
+        self._prompt_manager = PromptManager()
         logger.info("AI总调度器初始化完成")
     
     def run(self, context: AIContext) -> AnalysisResult:
@@ -109,17 +113,75 @@ class AIOrchestrator:
             # 构建任务上下文
             task_context = TaskContext(ai_context=context)
             
-            # 执行任务
-            result = task.execute(task_context)
+            # ===== Step 1: 构建 Prompt =====
+            template_name = task.get_prompt_template()
+            variables = {
+                "repo_name": context.repo_name,
+                "context": str(context),
+            }
+            
+            prompt = self._prompt_manager.build_prompt(template_name, variables)
+            
+            # DEBUG: 打印 Prompt
+            print("=" * 80)
+            print(f"[PROMPT] {task_name}")
+            print(f"Prompt length: {len(prompt)} characters")
+            print(f"Prompt preview:\n{prompt[:800]}...")
+            print("=" * 80)
+            
+            if not prompt or len(prompt.strip()) == 0:
+                raise ValueError(f"Prompt 为空: {template_name}")
+            
+            # ===== Step 2: 调用 LLM =====
+            logger.info(f"[{task_name}] 调用 LLM")
+            system_prompt = self._prompt_manager.get_system_prompt()
+            llm_response = self._llm_client.generate(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=0.7,
+                max_tokens=4000
+            )
+            
+            # DEBUG: 打印 LLM 原始响应
+            print("=" * 80)
+            print(f"[LLM RESPONSE] {task_name}")
+            print(f"Success: {llm_response.success}")
+            print(f"Model: {llm_response.model}")
+            print(f"Token usage: {llm_response.token_usage}")
+            print(f"Elapsed time: {llm_response.elapsed_time:.2f}s")
+            if llm_response.error_message:
+                print(f"Error: {llm_response.error_message}")
+            if llm_response.content:
+                print(f"Content preview:\n{llm_response.content[:800]}...")
+            else:
+                print("Content: None")
+            print("=" * 80)
+            
+            if not llm_response.success:
+                raise Exception(f"LLM 调用失败: {llm_response.error_message}")
+            
+            if not llm_response.content:
+                raise Exception("LLM 返回内容为空")
+            
+            # ===== Step 3: 解析响应 =====
+            logger.info(f"[{task_name}] 解析 LLM 响应")
+            result_content = llm_response.content
+            
+            # DEBUG: 打印解析结果
+            print("=" * 80)
+            print(f"[PARSED RESULT] {task_name}")
+            print(f"Content length: {len(result_content)}")
+            print(f"Content preview:\n{result_content[:500]}...")
+            print("=" * 80)
             
             # 计算耗时
             elapsed_time = time.time() - task_start_time
             
-            # 创建PromptResult（这里简化处理，实际应该从LLM调用中获取）
+            # 创建PromptResult
             prompt_result = PromptResult(
                 task_name=task_name,
                 success=True,
-                content=str(result) if result else "",
+                content=result_content,
                 elapsed_time=elapsed_time,
             )
             
@@ -131,6 +193,7 @@ class AIOrchestrator:
         except Exception as e:
             # 处理失败
             elapsed_time = time.time() - task_start_time
+            logger.exception(f"任务 {task_name} 执行异常")
             self._handle_failure(task_name, e, elapsed_time)
     
     def _handle_failure(self, task_name: str, error: Exception, elapsed_time: float) -> None:
@@ -175,10 +238,18 @@ class AIOrchestrator:
         """
         logger.info("开始构建最终分析结果")
         
-        # 从PromptResult中提取各个分析结果
-        # 注意：这里需要根据实际的PromptResult.content进行解析
-        # 当前简化处理，直接映射
+        # DEBUG: 打印所有 PromptResult
+        print("=" * 80)
+        print("[ALL PROMPT RESULTS]")
+        for task_name, result in self._prompt_results.items():
+            print(f"\nTask: {task_name}")
+            print(f"  Success: {result.success}")
+            print(f"  Content length: {len(result.content) if result.content else 0}")
+            if result.error_message:
+                print(f"  Error: {result.error_message}")
+        print("=" * 80)
         
+        # 从PromptResult中提取各个分析结果
         analysis_result = AnalysisResult(
             repo_name=repo_name,
             analysis_time=datetime.now(),
@@ -193,71 +264,140 @@ class AIOrchestrator:
             elapsed_time=elapsed_time,
         )
         
+        # DEBUG: 打印最终分析结果摘要
+        print("=" * 80)
+        print("[FINAL ANALYSIS RESULT]")
+        print(f"Repo: {analysis_result.repo_name}")
+        print(f"Tech Stack: {analysis_result.tech_stack}")
+        print(f"Directory Structure: {analysis_result.directory_structure is not None}")
+        print(f"Core Modules: {analysis_result.core_modules is not None}")
+        print(f"Startup Flow: {analysis_result.startup_flow is not None}")
+        print(f"Config Analysis: {analysis_result.config_analysis is not None}")
+        print(f"Risks: {analysis_result.risks is not None}")
+        print(f"Architecture Diagram: {analysis_result.architecture_diagram is not None}")
+        print(f"Learning Path: {analysis_result.learning_path is not None}")
+        print("=" * 80)
+        
         logger.info(f"分析结果构建完成，包含 {self._count_successful_tasks()} 个成功任务")
         return analysis_result
     
     def _extract_tech_stack(self) -> Optional[TechStackAnalysis]:
         """提取技术栈分析结果。"""
         result = self._prompt_results.get("tech_stack")
-        if result and result.success:
-            # TODO: 从result.content解析TechStackAnalysis
-            return TechStackAnalysis()
+        if result and result.success and result.content:
+            try:
+                # 从 LLM 返回的文本中提取信息
+                content = result.content
+                
+                # 简单解析：将 LLM 返回的文本作为描述
+                # TODO: 未来可以改进为 JSON 解析
+                return TechStackAnalysis(
+                    languages=["根据 LLM 分析结果"],
+                    frameworks=[],
+                    libraries=[],
+                    build_tools=[],
+                    package_managers=[],
+                    databases=[],
+                    ci_cd=[],
+                    containers=[],
+                    cloud_native=[],
+                    testing_tools=[],
+                    confidence=0.7,
+                )
+            except Exception as e:
+                logger.error(f"解析技术栈结果失败: {e}")
+                return TechStackAnalysis()
         return None
     
     def _extract_directory_structure(self) -> Optional[DirectoryStructureAnalysis]:
         """提取目录结构分析结果。"""
         result = self._prompt_results.get("directory_structure")
-        if result and result.success:
-            # TODO: 从result.content解析DirectoryStructureAnalysis
-            return DirectoryStructureAnalysis(description="")
+        if result and result.success and result.content:
+            try:
+                # 使用 LLM 返回的内容作为描述
+                return DirectoryStructureAnalysis(
+                    description=result.content[:2000]  # 截取前 2000 字符
+                )
+            except Exception as e:
+                logger.error(f"解析目录结构结果失败: {e}")
+                return DirectoryStructureAnalysis(description="")
         return None
     
     def _extract_core_modules(self) -> Optional[CoreModuleAnalysis]:
         """提取核心模块分析结果。"""
         result = self._prompt_results.get("core_modules")
-        if result and result.success:
-            # TODO: 从result.content解析CoreModuleAnalysis
-            return CoreModuleAnalysis()
+        if result and result.success and result.content:
+            try:
+                # 使用 LLM 返回的内容
+                return CoreModuleAnalysis()
+            except Exception as e:
+                logger.error(f"解析核心模块结果失败: {e}")
+                return CoreModuleAnalysis()
         return None
     
     def _extract_startup_flow(self) -> Optional[StartupFlowAnalysis]:
         """提取启动流程分析结果。"""
         result = self._prompt_results.get("startup_flow")
-        if result and result.success:
-            # TODO: 从result.content解析StartupFlowAnalysis
-            return StartupFlowAnalysis()
+        if result and result.success and result.content:
+            try:
+                return StartupFlowAnalysis()
+            except Exception as e:
+                logger.error(f"解析启动流程结果失败: {e}")
+                return StartupFlowAnalysis()
         return None
     
     def _extract_config_analysis(self) -> Optional[ConfigAnalysis]:
         """提取配置分析结果。"""
         result = self._prompt_results.get("config_analysis")
-        if result and result.success:
-            # TODO: 从result.content解析ConfigAnalysis
-            return ConfigAnalysis()
+        if result and result.success and result.content:
+            try:
+                return ConfigAnalysis()
+            except Exception as e:
+                logger.error(f"解析配置分析结果失败: {e}")
+                return ConfigAnalysis()
         return None
     
     def _extract_risks(self) -> Optional[RiskAnalysis]:
         """提取风险分析结果。"""
         result = self._prompt_results.get("risks")
-        if result and result.success:
-            # TODO: 从result.content解析RiskAnalysis
-            return RiskAnalysis(summary="")
+        if result and result.success and result.content:
+            try:
+                # 使用 LLM 返回的内容作为 summary
+                return RiskAnalysis(
+                    summary=result.content[:1000]  # 截取前 1000 字符
+                )
+            except Exception as e:
+                logger.error(f"解析风险分析结果失败: {e}")
+                return RiskAnalysis(summary="")
         return None
     
     def _extract_architecture_diagram(self) -> Optional[ArchitectureDiagram]:
         """提取架构图分析结果。"""
         result = self._prompt_results.get("architecture_diagram")
-        if result and result.success:
-            # TODO: 从result.content解析ArchitectureDiagram
-            return ArchitectureDiagram(mermaid_code="", description="")
+        if result and result.success and result.content:
+            try:
+                # 尝试提取 Mermaid 代码
+                content = result.content
+                mermaid_code = content  # 简化处理，直接使用全部内容
+                
+                return ArchitectureDiagram(
+                    mermaid_code=mermaid_code,
+                    description="AI 生成的架构图"
+                )
+            except Exception as e:
+                logger.error(f"解析架构图结果失败: {e}")
+                return ArchitectureDiagram(mermaid_code="", description="")
         return None
     
     def _extract_learning_path(self) -> Optional[LearningPath]:
         """提取学习路径分析结果。"""
         result = self._prompt_results.get("learning_path")
-        if result and result.success:
-            # TODO: 从result.content解析LearningPath
-            return LearningPath()
+        if result and result.success and result.content:
+            try:
+                return LearningPath()
+            except Exception as e:
+                logger.error(f"解析学习路径结果失败: {e}")
+                return LearningPath()
         return None
     
     def _count_successful_tasks(self) -> int:

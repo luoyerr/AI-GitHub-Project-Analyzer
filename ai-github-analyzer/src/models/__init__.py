@@ -1,5 +1,7 @@
 """
 模型模块 - 用于模块间通信的 Pydantic 数据模型。
+
+包含 AI 上下文、Prompt 结果和分析结果的统一数据契约。
 """
 
 from .base_models import (
@@ -11,36 +13,35 @@ from .base_models import (
     ClassificationResult,
 )
 from .tech_stack import ProjectTechStack
-from .analysis_result import (
-    AnalysisSection,
-    SectionResult,
-    TechStackAnalysis,
-    DirectoryStructureAnalysis,
-    CoreModuleAnalysis,
-    StartupFlowAnalysis,
-    ConfigAnalysis,
-    RiskItem,
-    RiskAnalysis,
-    ArchitectureDiagram,
-    LearningPath,
-    CompleteAnalysisResult,
-)
 from .ai_context import (
-    FileContext,
-    RepositoryContext,
-    TaskContext,
-    ContextBudget,
     AIContext,
+    ContextChunk,
+    DirectoryContext,
+    FileContext,
+    SelectedFileContext,
+    TechStackContext,
 )
-from .prompt_result import (
-    PromptMetrics,
-    ValidationResult,
-    PromptResult,
-    PromptTemplate,
-    PromptExecutionConfig,
+from .prompt_result import PromptResult, TokenUsage
+from .analysis_result import (
+    AnalysisResult as FinalAnalysisResult,
+    ArchitectureDiagram,
+    ConfigAnalysis,
+    ConfigFileInfo,
+    CoreModuleAnalysis,
+    CoreModuleInfo,
+    DirectoryStructureAnalysis,
+    LearningPath,
+    LearningPathStep,
+    ModuleRelationship,
+    RiskAnalysis,
+    RiskItem,
+    StartupFlowAnalysis,
+    TechStackAnalysis,
+    ValidationIssue,
 )
 
 __all__ = [
+    # 基础模型
     "AnalysisStatus",
     "RepositoryInfo",
     "AnalysisConfig",
@@ -48,29 +49,30 @@ __all__ = [
     "ScanResult",
     "ClassificationResult",
     "ProjectTechStack",
+    # AI 上下文模型
+    "AIContext",
+    "FileContext",
+    "DirectoryContext",
+    "TechStackContext",
+    "SelectedFileContext",
+    "ContextChunk",
+    # Prompt 结果模型
+    "PromptResult",
+    "TokenUsage",
     # 分析结果模型
-    "AnalysisSection",
-    "SectionResult",
+    "FinalAnalysisResult",
     "TechStackAnalysis",
     "DirectoryStructureAnalysis",
     "CoreModuleAnalysis",
+    "CoreModuleInfo",
+    "ModuleRelationship",
     "StartupFlowAnalysis",
     "ConfigAnalysis",
-    "RiskItem",
+    "ConfigFileInfo",
     "RiskAnalysis",
+    "RiskItem",
     "ArchitectureDiagram",
     "LearningPath",
-    "CompleteAnalysisResult",
-    # AI 上下文模型
-    "FileContext",
-    "RepositoryContext",
-    "TaskContext",
-    "ContextBudget",
-    "AIContext",
-    # Prompt 结果模型
-    "PromptMetrics",
-    "ValidationResult",
-    "PromptResult",
-    "PromptTemplate",
-    "PromptExecutionConfig",
+    "LearningPathStep",
+    "ValidationIssue",
 ]

@@ -1,66 +1,47 @@
 """
-Prompt 结果模型。
+单 Task 输出模型。
 
-定义 Prompt 执行后的结果数据结构。
+定义单个 Prompt 任务执行后的结果数据结构，支持失败重试场景、
+Token 使用统计、错误信息和元数据记录。
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, Field
 
 
-class PromptMetrics(BaseModel):
-    """Prompt 执行指标。"""
-    prompt_tokens: int = 0
-    completion_tokens: int = 0
-    total_tokens: int = 0
-    execution_time_ms: int = 0
-    retry_count: int = 0
+class TokenUsage(BaseModel):
+    """Token 使用统计。"""
 
-
-class ValidationResult(BaseModel):
-    """验证结果。"""
-    is_valid: bool
-    errors: List[str] = Field(default_factory=list)
-    warnings: List[str] = Field(default_factory=list)
-    validation_details: Dict[str, Any] = Field(default_factory=dict)
+    prompt_tokens: int = Field(default=0, ge=0, description="输入 Token 数量")
+    completion_tokens: int = Field(default=0, ge=0, description="输出 Token 数量")
+    total_tokens: int = Field(default=0, ge=0, description="总 Token 数量")
 
 
 class PromptResult(BaseModel):
-    """Prompt 执行结果。"""
-    prompt_name: str
-    raw_response: str = ""
-    parsed_response: Optional[Any] = None
-    success: bool = True
-    error_message: Optional[str] = None
-    validation_result: Optional[ValidationResult] = None
-    metrics: PromptMetrics = Field(default_factory=PromptMetrics)
-    timestamp: datetime = Field(default_factory=datetime.now)
-    
-    class Config:
-        """Pydantic 配置。"""
-        arbitrary_types_allowed = True
+    """
+    单 Task 输出模型。
 
+    记录单个 Prompt 任务的执行结果，包括成功/失败状态、
+    响应内容、Token 使用、耗时、重试次数和错误信息。
+    支持 DAG 工作流中的节点级重试和恢复。
+    """
 
-class PromptTemplate(BaseModel):
-    """Prompt 模板定义。"""
-    name: str
-    template_path: str
-    version: str = "1.0.0"
-    description: str = ""
-    input_schema: Dict[str, Any] = Field(default_factory=dict)
-    output_schema: Dict[str, Any] = Field(default_factory=dict)
-    constraints: Dict[str, Any] = Field(default_factory=dict)
-    retry_policy: Dict[str, Any] = Field(default_factory=dict)
+    task_name: str = Field(description="任务名称（对应 Agent 或 Node 名称）")
+    success: bool = Field(description="任务是否成功执行")
 
+    prompt: Optional[str] = Field(default=None, description="实际使用的 Prompt 内容")
+    content: Optional[str] = Field(default=None, description="AI 响应内容（原始或解析后）")
 
-class PromptExecutionConfig(BaseModel):
-    """Prompt 执行配置。"""
-    temperature: float = 0.2
-    max_tokens: int = 4000
-    top_p: float = 0.9
-    frequency_penalty: float = 0.0
-    presence_penalty: float = 0.0
-    timeout_seconds: int = 60
-    max_retries: int = 3
-    retry_delay_seconds: float = 2.0
+    model_name: Optional[str] = Field(default=None, description="使用的 LLM 模型名称")
+    token_usage: Optional[TokenUsage] = Field(default=None, description="Token 使用统计")
+    elapsed_time: float = Field(default=0.0, ge=0.0, description="执行耗时（秒）")
+    retry_count: int = Field(default=0, ge=0, description="重试次数")
+
+    error_message: Optional[str] = Field(default=None, description="错误信息（失败时）")
+
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="扩展元数据（支持未来字段扩展）"
+    )
+    created_at: datetime = Field(default_factory=datetime.now, description="结果创建时间")

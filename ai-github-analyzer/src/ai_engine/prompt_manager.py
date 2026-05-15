@@ -191,8 +191,8 @@ class PromptManager:
             var_str = str(var_value) if var_value is not None else ""
             # 替换 {{ var_name }} 格式的占位符
             pattern = r"\{\{\s*" + re.escape(var_name) + r"\s*\}\}"
-            rendered_prompt = re.sub(pattern, var_str, rendered_prompt)
-        
+            # rendered_prompt = re.sub(pattern, var_str, rendered_prompt)
+            rendered_prompt = re.sub(pattern, lambda m: var_str, rendered_prompt)
         logger.debug(f"成功渲染模板: {task_name} (注入 {len(variables)} 个变量)")
         
         return rendered_prompt

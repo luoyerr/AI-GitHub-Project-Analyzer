@@ -485,12 +485,6 @@ def analyze(
         phase2_elapsed = time.time() - phase2_start
         console.print(f"[bold green]✓ Phase 2 完成，耗时: {phase2_elapsed:.2f}秒[/bold green]\n")
         
-        # 清理临时克隆目录
-        if resolver.is_temp_clone:
-            logger.info("开始清理临时克隆目录")
-            asyncio.run(resolver.github_cloner.cleanup())
-            resolver.is_temp_clone = False
-        
         # ==================== Phase 3: 上下文构建 ====================
         console.print(Panel.fit("[bold blue]Phase 3: 上下文构建[/bold blue]", border_style="blue"))
         phase3_start = time.time()
@@ -535,6 +529,12 @@ def analyze(
             border_style="green"
         )
         console.print(summary_panel)
+        
+        # 最后清理临时克隆目录（在所有阶段完成后）
+        if resolver.is_temp_clone:
+            logger.info("开始清理临时克隆目录")
+            asyncio.run(resolver.github_cloner.cleanup())
+            resolver.is_temp_clone = False
         
         return analysis_result
         

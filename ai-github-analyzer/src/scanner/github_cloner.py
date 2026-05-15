@@ -21,7 +21,7 @@ from loguru import logger
 class GitHubCloner:
     """GitHub 仓库克隆器。"""
     
-    CLONE_TIMEOUT = 60  # 克隆超时时间（秒）
+    CLONE_TIMEOUT = 180  # 克隆超时时间（秒）
     MAX_CLEANUP_RETRIES = 3  # 最大清理重试次数
     CLEANUP_RETRY_DELAYS = [1, 2, 3]  # 指数退避延迟（秒）
     

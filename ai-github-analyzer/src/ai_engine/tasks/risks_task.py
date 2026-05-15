@@ -44,7 +44,14 @@ class RisksTask(BaseTask):
         Returns:
             RiskAnalysis: 风险分析结果
         """
-        pass
+        logger.info("开始执行风险分析任务")
+        
+        # TODO: 实际应该调用 LLM 进行 AI 分析
+        # 当前阶段返回空对象，避免 NoneType 错误
+        result = RiskAnalysis(summary="")
+        
+        logger.info("风险分析任务完成")
+        return result
     
     def get_prompt_template(self) -> str:
         """获取 Prompt 模板名称。"""
@@ -60,4 +67,8 @@ class RisksTask(BaseTask):
         Returns:
             bool: 结果是否有效
         """
-        pass
+        if not isinstance(result, RiskAnalysis):
+            logger.warning(f"结果类型不正确: {type(result)}")
+            return False
+        
+        return True

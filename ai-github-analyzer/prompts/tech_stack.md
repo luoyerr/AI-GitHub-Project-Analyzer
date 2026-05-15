@@ -6,10 +6,11 @@
 
 ## 输入变量
 
-- `repo_name`: 仓库名称
-- `context`: 项目上下文信息
-- `file_list`: 文件列表
-- `config_files`: 配置文件内容
+- `repo_name`: {{repo_name}}
+- `directory_tree`: {{directory_tree}}
+- `key_files`: {{key_files}}
+- `detected_tech_stack`: {{detected_tech_stack}}
+- `sampled_code`: {{sampled_code}}
 
 ## 输出要求
 
@@ -28,3 +29,4 @@
 - 避免猜测
 - 标记不确定性
 - 提供证据来源
+- **重要**：必须基于实际的项目信息进行分析，不要返回“请提供xxx”之类的提示

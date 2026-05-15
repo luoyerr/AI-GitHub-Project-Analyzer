@@ -6,10 +6,10 @@
 
 ## 输入变量
 
-- `repo_name`: 仓库名称
-- `context`: 项目上下文信息
-- `directory_tree`: 目录树结构
-- `key_files`: 关键文件列表
+- `repo_name`: {{repo_name}}
+- `directory_tree`: {{directory_tree}}
+- `key_files`: {{key_files}}
+- `detected_tech_stack`: {{detected_tech_stack}}
 
 ## 输出要求
 
@@ -27,3 +27,4 @@
 - 说明每个目录的作用
 - 识别架构模式（MVC、分层等）
 - 标记不明确的目录
+- **重要**：必须基于实际的项目信息进行分析，不要返回“请提供xxx”之类的提示

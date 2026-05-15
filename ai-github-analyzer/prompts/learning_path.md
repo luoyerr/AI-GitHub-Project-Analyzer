@@ -6,10 +6,10 @@
 
 ## 输入变量
 
-- `repo_name`: 仓库名称
-- `context`: 项目上下文信息
-- `complexity_analysis`: 复杂度分析
-- `module_dependencies`: 模块依赖关系
+- `repo_name`: {{repo_name}}
+- `directory_tree`: {{directory_tree}}
+- `key_files`: {{key_files}}
+- `sampled_code`: {{sampled_code}}
 
 ## 输出要求
 
@@ -28,3 +28,4 @@
 - 从简单到复杂递进
 - 提供具体的文件路径
 - 标记难点和重点
+- **重要**：必须基于实际的项目信息进行分析，不要返回“请提供xxx”之类的提示

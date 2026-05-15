@@ -6,10 +6,10 @@
 
 ## 输入变量
 
-- `repo_name`: 仓库名称
-- `context`: 项目上下文信息
-- `config_files`: 配置文件内容
-- `env_example`: .env.example 内容
+- `repo_name`: {{repo_name}}
+- `directory_tree`: {{directory_tree}}
+- `key_files`: {{key_files}}
+- `sampled_code`: {{sampled_code}}
 
 ## 输出要求
 
@@ -28,3 +28,4 @@
 - 说明配置项含义
 - 识别配置最佳实践
 - 标记不合理的配置
+- **重要**：必须基于实际的项目信息进行分析，不要返回“请提供xxx”之类的提示

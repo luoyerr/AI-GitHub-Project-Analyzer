@@ -91,6 +91,7 @@ class MarkdownFormatter:
         - 标题符号 # 后必须有一个空格
         - 标题文本后不能有 trailing spaces
         - 保持标题层级一致性
+        - 禁止出现重复的 # (# #、## #、### #)
 
         参数:
             content: Markdown 字符串。
@@ -102,12 +103,24 @@ class MarkdownFormatter:
         normalized_lines = []
 
         for line in lines:
-            # 匹配标题行
-            heading_match = re.match(r'^(#{1,6})(\S.*)$', line)
+            # 匹配标题行（包括错误的 # # 格式）
+            heading_match = re.match(r'^(#{1,6})\s*(#{0,6})\s*(.*)$', line)
             if heading_match:
                 hashes = heading_match.group(1)
-                text = heading_match.group(2).strip()
-                normalized_lines.append(f"{hashes} {text}")
+                extra_hashes = heading_match.group(2).strip()
+                text = heading_match.group(3).strip()
+                
+                # 如果有多余的 #，移除它们
+                if extra_hashes:
+                    # 移除文本开头可能存在的额外 #
+                    text = re.sub(r'^#+\s*', '', text)
+                
+                # 确保标题格式正确：# 后面有空格，然后是文本
+                if text:
+                    normalized_lines.append(f"{hashes} {text}")
+                else:
+                    # 如果没有文本，保留原始行但去除多余 #
+                    normalized_lines.append(f"{hashes}")
             else:
                 # 非标题行，去除尾部空格
                 normalized_lines.append(line.rstrip())
@@ -262,6 +275,46 @@ class MarkdownFormatter:
         return content
 
     @staticmethod
+    def clean_mermaid(content: str) -> str:
+        """
+        清洗 Mermaid 内容，去除 Markdown fence 和隐藏字符。
+        
+        功能：
+        - 删除 ```mermaid 标记
+        - 删除 ``` 标记
+        - 删除隐藏 Unicode 字符（如 \u200b）
+        - 返回纯 Mermaid 代码
+        
+        参数:
+            content: 可能包含 Markdown fence 的 Mermaid 字符串。
+        
+        返回:
+            纯 Mermaid 代码字符串。
+        
+        注意:
+            此函数确保 AI 返回的内容不会导致双重包裹问题。
+        """
+        if not content:
+            return ""
+        
+        # 删除隐藏 Unicode 字符（零宽空格等）
+        content = content.replace("\u200b", "")
+        content = content.replace("\u200c", "")
+        content = content.replace("\u200d", "")
+        content = content.replace("\ufeff", "")
+        
+        # 删除 ```mermaid 标记（不区分大小写）
+        content = re.sub(r'```\s*mermaid\s*', '', content, flags=re.IGNORECASE)
+        
+        # 删除剩余的 ``` 标记
+        content = re.sub(r'```', '', content)
+        
+        # 去除首尾空白
+        content = content.strip()
+        
+        return content
+
+    @staticmethod
     def fix_common_issues(content: str) -> str:
         """
         修复常见的 Markdown 问题。
@@ -272,6 +325,8 @@ class MarkdownFormatter:
         - 图片格式错误
         - 表格对齐问题
         - 强调符号不规范
+        - 重复的 # 符号（# #、## #、### #）
+        - Markdown fence 未闭合（自动补充）
 
         参数:
             content: Markdown 字符串。
@@ -279,6 +334,12 @@ class MarkdownFormatter:
         返回:
             修复后的字符串。
         """
+        # 修复重复的 # 符号（全局兜底）
+        content = MarkdownFormatter._remove_duplicate_hashes(content)
+        
+        # 修复 Markdown fence 未闭合问题
+        content = MarkdownFormatter._fix_unclosed_fences(content)
+        
         # 修复链接格式 [text](url) 中间不应有空格
         content = re.sub(r'\[([^\]]+)\]\s*\(\s*([^)]+)\s*\)', r'[\1](\2)', content)
 
@@ -292,3 +353,57 @@ class MarkdownFormatter:
         content = re.sub(r'(?<!\*)\*(?!\*)([^*]+)(?<!\*)\*(?!\*)', r'*\1*', content)
 
         return content
+    
+    @staticmethod
+    def _fix_unclosed_fences(content: str) -> str:
+        """
+        修复未闭合的 Markdown fence。
+        
+        如果 ``` 标记数量为奇数，自动在文档末尾补充一个 ``` 来闭合。
+        
+        参数:
+            content: Markdown 字符串。
+        
+        返回:
+            修复后的字符串。
+        """
+        fence_count = content.count('```')
+        
+        # 如果数量为奇数，补充一个 ```
+        if fence_count % 2 != 0:
+            # 在文档末尾添加闭合标记
+            content = content.rstrip() + '\n```\n'
+        
+        return content
+    
+    @staticmethod
+    def _remove_duplicate_hashes(content: str) -> str:
+        """
+        移除重复的 # 符号。
+        
+        将 "# # 标题" 转换为 "# 标题"
+        将 "## # 标题" 转换为 "## 标题"
+        将 "### # 标题" 转换为 "### 标题"
+        
+        参数:
+            content: Markdown 字符串。
+            
+        返回:
+            修复后的字符串。
+        """
+        lines = content.split('\n')
+        fixed_lines = []
+        
+        for line in lines:
+            # 匹配 # #、## #、### # 等模式
+            match = re.match(r'^(#{1,6})\s+#+\s+(.*)$', line)
+            if match:
+                correct_hashes = match.group(1)
+                text = match.group(2).strip()
+                # 移除文本中可能还存在的多余 #
+                text = re.sub(r'^#+\s*', '', text)
+                fixed_lines.append(f"{correct_hashes} {text}")
+            else:
+                fixed_lines.append(line)
+        
+        return '\n'.join(fixed_lines)

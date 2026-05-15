@@ -45,9 +45,8 @@ class LearningPathTask(BaseTask):
         """
         logger.info("开始执行学习路径分析任务")
         
-        # TODO: 实际应该调用 LLM 进行 AI 分析
-        # 当前阶段返回空对象，避免 NoneType 错误
-        result = LearningPath()
+        # 使用通用 LLM 执行流程
+        result = self.execute_with_llm(context)
         
         logger.info("学习路径分析任务完成")
         return result

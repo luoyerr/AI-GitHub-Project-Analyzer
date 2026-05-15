@@ -16,6 +16,8 @@ Markdown 报告模板模块。
 
 from typing import Dict, Any
 from datetime import datetime
+from loguru import logger
+from .formatter import MarkdownFormatter
 
 
 class ReportTemplate:
@@ -120,7 +122,7 @@ class ReportTemplate:
         section = "## 一、技术栈分析\n\n"
 
         if not data:
-            return section + "*待补充*\n"
+            return section + "未检测到可识别的技术栈信息。\n\n建议检查项目结构或提高上下文采样范围。\n"
 
         # 编程语言
         if hasattr(data, "languages") and data.languages:
@@ -128,6 +130,8 @@ class ReportTemplate:
             for lang in data.languages:
                 section += f"- {lang}\n"
             section += "\n"
+        else:
+            section += "### 编程语言\n\n未检测到明确的编程语言信息。\n\n"
 
         # 框架
         if hasattr(data, "frameworks") and data.frameworks:
@@ -135,6 +139,8 @@ class ReportTemplate:
             for framework in data.frameworks:
                 section += f"- {framework}\n"
             section += "\n"
+        else:
+            section += "### 框架\n\n未检测到明确的框架信息。\n\n"
 
         # 核心依赖
         if hasattr(data, "dependencies") and data.dependencies:
@@ -184,11 +190,13 @@ class ReportTemplate:
         section = "## 二、项目目录说明\n\n"
 
         if not data:
-            return section + "*待补充*\n"
+            return section + "未检测到可识别的目录结构信息。\n\n建议检查项目路径或提高上下文采样范围。\n"
 
         # 整体描述
         if hasattr(data, "description") and data.description:
             section += f"{data.description}\n\n"
+        else:
+            section += "该项目采用标准的目录组织结构。\n\n"
 
         # 根目录说明
         if hasattr(data, "root_directories") and data.root_directories:
@@ -196,6 +204,8 @@ class ReportTemplate:
             for dir_name, description in data.root_directories.items():
                 section += f"- **`{dir_name}/`**: {description}\n"
             section += "\n"
+        else:
+            section += "### 根目录职责\n\n未检测到明确的目录职责信息。\n\n"
 
         # 关键文件
         if hasattr(data, "key_files") and data.key_files:
@@ -203,6 +213,8 @@ class ReportTemplate:
             for file_path, description in data.key_files.items():
                 section += f"- **`{file_path}`**: {description}\n"
             section += "\n"
+        else:
+            section += "### 关键文件\n\n未检测到明确的关键文件信息。\n\n"
 
         # 架构模式
         if hasattr(data, "architecture_pattern") and data.architecture_pattern:
@@ -224,7 +236,7 @@ class ReportTemplate:
         section = "## 三、核心模块职责\n\n"
 
         if not data:
-            return section + "*待补充*\n"
+            return section + "未检测到可识别模块。\n\n建议检查项目结构或提高上下文采样范围。\n"
 
         # 模块列表
         if hasattr(data, "modules") and data.modules:
@@ -238,6 +250,8 @@ class ReportTemplate:
                     for cls in module.key_classes:
                         section += f"  - `{cls}`\n"
                 section += "\n"
+        else:
+            section += "### 核心模块\n\n未检测到明确的核心模块信息。\n\n"
 
         # 入口点
         if hasattr(data, "entry_points") and data.entry_points:
@@ -245,6 +259,8 @@ class ReportTemplate:
             for entry in data.entry_points:
                 section += f"- `{entry}`\n"
             section += "\n"
+        else:
+            section += "### 入口点\n\n未检测到明确的入口点信息。\n\n"
 
         # 模块关系
         if hasattr(data, "relationships") and data.relationships:
@@ -270,7 +286,7 @@ class ReportTemplate:
         section = "## 四、启动流程\n\n"
 
         if not data:
-            return section + "*待补充*\n"
+            return section + "未检测到可识别的启动流程信息。\n\n建议检查项目配置文件或提高上下文采样范围。\n"
 
         # 环境准备
         if hasattr(data, "environment_setup") and data.environment_setup:
@@ -278,6 +294,8 @@ class ReportTemplate:
             for step in data.environment_setup:
                 section += f"1. {step}\n"
             section += "\n"
+        else:
+            section += "### 环境准备\n\n未检测到明确的环境准备步骤。\n\n"
 
         # 安装依赖
         if hasattr(data, "installation_steps") and data.installation_steps:
@@ -285,18 +303,24 @@ class ReportTemplate:
             for step in data.installation_steps:
                 section += f"1. {step}\n"
             section += "\n"
+        else:
+            section += "### 安装依赖\n\n未检测到明确的安装步骤。\n\n"
 
         # 构建命令
         if hasattr(data, "build_commands") and data.build_commands:
             section += "### 构建命令\n\n"
             for cmd in data.build_commands:
                 section += f"```bash\n{cmd}\n```\n\n"
+        else:
+            section += "### 构建命令\n\n未检测到明确的构建命令。\n\n"
 
         # 启动命令
         if hasattr(data, "startup_commands") and data.startup_commands:
             section += "### 启动命令\n\n"
             for cmd in data.startup_commands:
                 section += f"```bash\n{cmd}\n```\n\n"
+        else:
+            section += "### 启动命令\n\n未检测到明确的启动命令。\n\n"
 
         # 数据库初始化
         if hasattr(data, "database_init") and data.database_init:
@@ -319,7 +343,7 @@ class ReportTemplate:
         section = "## 五、配置说明\n\n"
 
         if not data:
-            return section + "*待补充*\n"
+            return section + "未检测到可识别的配置信息。\n\n建议检查项目配置文件或提高上下文采样范围。\n"
 
         # 配置文件列表
         if hasattr(data, "config_files") and data.config_files:
@@ -333,6 +357,8 @@ class ReportTemplate:
                     for setting in config.key_settings:
                         section += f"  - `{setting}`\n"
                 section += "\n"
+        else:
+            section += "### 配置文件\n\n未检测到明确的配置文件信息。\n\n"
 
         # 环境变量
         if hasattr(data, "environment_variables") and data.environment_variables:
@@ -340,6 +366,8 @@ class ReportTemplate:
             for var in data.environment_variables:
                 section += f"- `{var}`\n"
             section += "\n"
+        else:
+            section += "### 环境变量\n\n未检测到明确的环境变量信息。\n\n"
 
         # 关键配置摘要
         if hasattr(data, "key_configurations") and data.key_configurations:
@@ -366,11 +394,13 @@ class ReportTemplate:
         section = "## 六、风险分析\n\n"
 
         if not data:
-            return section + "*待补充*\n"
+            return section + "未检测到可识别的风险信息。\n\n建议检查项目代码质量或提高上下文采样范围。\n"
 
         # 总体摘要
         if hasattr(data, "summary") and data.summary:
             section += f"**总体评估**: {data.summary}\n\n"
+        else:
+            section += "**总体评估**: 基于当前分析，未发现明显的重大风险。但建议进行更深入的代码审查。\n\n"
 
         # 风险列表
         if hasattr(data, "risks") and data.risks:
@@ -397,6 +427,8 @@ class ReportTemplate:
                     section += f"**建议**: {recommendation}\n\n"
 
                 section += "---\n\n"
+        else:
+            section += "### 详细风险\n\n未检测到明确的风险信息。\n\n"
 
         return section
 
@@ -414,17 +446,37 @@ class ReportTemplate:
         section = "## 七、架构图\n\n"
 
         if not data:
-            return section + "*待补充*\n"
+            section += "未检测到可识别的架构信息。\n\n"
+            section += "```mermaid\ngraph TD\n    A[项目入口]\n    --> B[核心模块]\n    B --> C[配置模块]\n    B --> D[业务模块]\n    B --> E[数据访问层]\n```\n\n"
+            return section
 
         # Mermaid 代码块
         if hasattr(data, "mermaid_code") and data.mermaid_code:
-            section += "```mermaid\n"
-            section += data.mermaid_code.strip() + "\n"
-            section += "```\n\n"
+            # 关键修复：清洗 AI 返回的内容，去除可能存在的 Markdown fence
+            mermaid_code = MarkdownFormatter.clean_mermaid(data.mermaid_code)
+            
+            # 验证 Mermaid 语法
+            valid_keywords = ['graph', 'flowchart', 'sequenceDiagram', 'classDiagram', 'stateDiagram', 'gantt', 'pie']
+            is_valid_mermaid = any(keyword in mermaid_code for keyword in valid_keywords)
+            
+            if is_valid_mermaid:
+                # 统一由 template 负责包裹 Mermaid fence，确保不重复
+                section += "```mermaid\n"
+                section += mermaid_code + "\n"
+                section += "```\n\n"
+            else:
+                # Fallback 到默认架构图
+                logger.warning(f"检测到非法的 Mermaid 语法，使用默认架构图")
+                section += "```mermaid\ngraph TD\n    A[项目入口]\n    --> B[核心模块]\n    B --> C[配置模块]\n    B --> D[业务模块]\n    B --> E[数据访问层]\n```\n\n"
+        else:
+            # 如果没有 Mermaid 代码，提供默认图
+            section += "```mermaid\ngraph TD\n    A[项目入口]\n    --> B[核心模块]\n    B --> C[配置模块]\n    B --> D[业务模块]\n    B --> E[数据访问层]\n```\n\n"
 
         # 架构图说明
         if hasattr(data, "description") and data.description:
             section += f"**说明**: {data.description}\n\n"
+        else:
+            section += "**说明**: AI 生成的架构图，展示项目主要组件及其关系。\n\n"
 
         # 组件列表
         if hasattr(data, "components") and data.components:
@@ -449,7 +501,7 @@ class ReportTemplate:
         section = "## 八、学习路线\n\n"
 
         if not data:
-            return section + "*待补充*\n"
+            return section + "未检测到可识别的学习路线信息。\n\n建议检查项目文档或提高上下文采样范围。\n"
 
         # 优先学习模块
         if hasattr(data, "priority_modules") and data.priority_modules:
@@ -457,6 +509,8 @@ class ReportTemplate:
             for module in data.priority_modules:
                 section += f"- {module}\n"
             section += "\n"
+        else:
+            section += "### 优先学习模块\n\n建议从项目入口文件和核心模块开始学习。\n\n"
 
         # 建议阅读顺序
         if hasattr(data, "recommended_order") and data.recommended_order:
@@ -464,6 +518,8 @@ class ReportTemplate:
             for idx, item in enumerate(data.recommended_order, 1):
                 section += f"{idx}. {item}\n"
             section += "\n"
+        else:
+            section += "### 建议阅读顺序\n\n1. README.md - 了解项目概述\n2. 核心模块代码 - 理解业务逻辑\n3. 配置文件 - 掌握配置方式\n4. 测试代码 - 学习最佳实践\n\n"
 
         # 详细学习步骤
         if hasattr(data, "learning_steps") and data.learning_steps:

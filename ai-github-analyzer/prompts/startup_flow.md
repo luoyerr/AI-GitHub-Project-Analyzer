@@ -6,11 +6,10 @@
 
 ## 输入变量
 
-- `repo_name`: 仓库名称
-- `context`: 项目上下文信息
-- `entry_files`: 入口文件
-- `config_examples`: 配置示例
-- `readme_content`: README 内容
+- `repo_name`: {{repo_name}}
+- `directory_tree`: {{directory_tree}}
+- `key_files`: {{key_files}}
+- `sampled_code`: {{sampled_code}}
 
 ## 输出要求
 
@@ -30,3 +29,4 @@
 - 提供完整命令示例
 - 说明环境变量需求
 - 标记缺失的配置说明
+- **重要**：必须基于实际的项目信息进行分析，不要返回“请提供xxx”之类的提示

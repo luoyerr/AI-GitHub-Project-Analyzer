@@ -6,10 +6,10 @@
 
 ## 输入变量
 
-- `repo_name`: 仓库名称
-- `context`: 项目上下文信息
-- `module_files`: 模块相关文件
-- `import_graph`: 导入关系图
+- `repo_name`: {{repo_name}}
+- `directory_tree`: {{directory_tree}}
+- `key_files`: {{key_files}}
+- `sampled_code`: {{sampled_code}}
 
 ## 输出要求
 
@@ -28,3 +28,4 @@
 - 说明每个模块的核心职责
 - 评估模块设计合理性
 - 标记耦合度高的模块
+- **重要**：必须基于实际的项目信息进行分析，不要返回“请提供xxx”之类的提示

@@ -189,11 +189,66 @@ class BaseTask(ABC):
         Returns:
             Dict[str, Any]: 变量字典
         """
-        # 默认变量
+        # 默认变量 - 必须包含完整的 repo 上下文
         variables = {
             "repo_name": context.ai_context.repo_name if context.ai_context else "未知仓库",
-            "context": str(context.ai_context) if context.ai_context else "无上下文",
         }
+        
+        # 添加目录树信息
+        if context.ai_context and hasattr(context.ai_context, 'directory_tree'):
+            directory_tree = context.ai_context.directory_tree
+            if directory_tree:
+                variables['directory_tree'] = str(directory_tree)
+            else:
+                variables['directory_tree'] = "未检测到目录树信息"
+        else:
+            variables['directory_tree'] = "未检测到目录树信息"
+        
+        # 添加关键文件列表
+        if context.ai_context and hasattr(context.ai_context, 'key_files'):
+            key_files = context.ai_context.key_files
+            if key_files:
+                variables['key_files'] = '\n'.join(key_files) if isinstance(key_files, list) else str(key_files)
+            else:
+                variables['key_files'] = "未检测到关键文件"
+        else:
+            variables['key_files'] = "未检测到关键文件"
+        
+        # 添加技术栈信息
+        if context.ai_context and hasattr(context.ai_context, 'tech_stack'):
+            tech_stack = context.ai_context.tech_stack
+            if tech_stack:
+                variables['detected_tech_stack'] = str(tech_stack)
+            else:
+                variables['detected_tech_stack'] = "未检测到技术栈信息"
+        else:
+            variables['detected_tech_stack'] = "未检测到技术栈信息"
+        
+        # 添加代码样本
+        if context.ai_context and hasattr(context.ai_context, 'sampled_code'):
+            sampled_code = context.ai_context.sampled_code
+            if sampled_code:
+                # 限制代码样本长度，避免 prompt 过长
+                code_str = str(sampled_code)
+                if len(code_str) > 5000:
+                    code_str = code_str[:5000] + "\n... (代码过长，已截断)"
+                variables['sampled_code'] = code_str
+            else:
+                variables['sampled_code'] = "未检测到代码样本"
+        else:
+            variables['sampled_code'] = "未检测到代码样本"
+        
+        # 添加完整上下文（作为兜底）
+        variables['context'] = str(context.ai_context) if context.ai_context else "无上下文"
+        
+        # DEBUG: 打印变量摘要
+        logger.info(f"Prompt 变量摘要:")
+        logger.info(f"  - repo_name: {variables.get('repo_name', 'N/A')}")
+        logger.info(f"  - directory_tree length: {len(variables.get('directory_tree', ''))}")
+        logger.info(f"  - key_files length: {len(variables.get('key_files', ''))}")
+        logger.info(f"  - detected_tech_stack length: {len(variables.get('detected_tech_stack', ''))}")
+        logger.info(f"  - sampled_code length: {len(variables.get('sampled_code', ''))}")
+        
         return variables
     
     def _parse_llm_response(self, content: str, context: TaskContext) -> Any:

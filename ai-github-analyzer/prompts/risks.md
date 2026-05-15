@@ -6,11 +6,11 @@
 
 ## 输入变量
 
-- `repo_name`: 仓库名称
-- `context`: 项目上下文信息
-- `code_samples`: 代码样本
-- `dependency_info`: 依赖信息
-- `test_coverage`: 测试覆盖率
+- `repo_name`: {{repo_name}}
+- `directory_tree`: {{directory_tree}}
+- `key_files`: {{key_files}}
+- `sampled_code`: {{sampled_code}}
+- `detected_tech_stack`: {{detected_tech_stack}}
 
 ## 输出要求
 
@@ -29,3 +29,4 @@
 - 按严重程度排序
 - 提供改进建议
 - 避免过度批评
+- **重要**：必须基于实际的项目信息进行分析，不要返回“请提供xxx”之类的提示

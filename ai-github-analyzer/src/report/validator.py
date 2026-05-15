@@ -111,6 +111,11 @@ class ReportValidator:
         errors.extend(markdown_errors)
         warnings.extend(markdown_warnings)
 
+        # 7. Markdown Fence 配对检查（防止代码块未闭合）
+        fence_errors, fence_warnings = ReportValidator._validate_markdown_fence(content)
+        errors.extend(fence_errors)
+        warnings.extend(fence_warnings)
+
         # 判断是否通过
         passed = len(errors) == 0
 
@@ -314,6 +319,74 @@ class ReportValidator:
                     f"第 {i} 行存在空标题"
                 ))
 
+        return errors, warnings
+
+    @staticmethod
+    def _validate_markdown_fence(content: str) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+        """
+        验证 Markdown fence（```）配对情况。
+        
+        功能：
+        - 检查所有 ``` 标记是否成对出现
+        - 如果数量为奇数，自动检测并报告错误
+        - 防止 Markdown 内容被 code block 吃掉
+        
+        参数:
+            content: Markdown 报告字符串。
+        
+        返回:
+            (错误列表, 警告列表)。
+        
+        注意:
+            此检查是防止 Mermaid 双重包裹导致后续标题损坏的关键保障。
+        """
+        errors: List[Tuple[str, str]] = []
+        warnings: List[Tuple[str, str]] = []
+        
+        # 统计所有 ``` 标记的数量
+        fence_count = content.count('```')
+        
+        # 如果数量为奇数，说明有未闭合的 code block
+        if fence_count % 2 != 0:
+            errors.append((
+                "markdown_fence_mismatch",
+                f"Markdown fence 标记数量不匹配: 共 {fence_count} 个 ``` 标记（应为偶数）"
+            ))
+            
+            # 尝试定位问题位置
+            lines = content.split('\n')
+            unclosed_blocks = []
+            in_code_block = False
+            code_block_start = 0
+            
+            for i, line in enumerate(lines, 1):
+                if '```' in line:
+                    if not in_code_block:
+                        in_code_block = True
+                        code_block_start = i
+                    else:
+                        in_code_block = False
+            
+            if in_code_block:
+                errors.append((
+                    "unclosed_code_block_location",
+                    f"从第 {code_block_start} 行开始的代码块未闭合"
+                ))
+        
+        # 检查 mermaid 代码块的完整性
+        mermaid_pattern = r'```mermaid\s*\n(.*?)\n```'
+        mermaid_blocks = re.findall(mermaid_pattern, content, re.DOTALL | re.IGNORECASE)
+        
+        # 检查是否有孤立的 ```mermaid 开始标记
+        isolated_mermaid_starts = len(re.findall(r'```mermaid', content, re.IGNORECASE))
+        complete_mermaid_blocks = len(mermaid_blocks)
+        
+        if isolated_mermaid_starts > complete_mermaid_blocks:
+            warnings.append((
+                "incomplete_mermaid_block",
+                f"检测到 {isolated_mermaid_starts} 个 mermaid 开始标记，但只有 {complete_mermaid_blocks} 个完整代码块"
+            ))
+        
         return errors, warnings
 
     @staticmethod

@@ -466,6 +466,22 @@ def analyze(
         phase1_start = time.time()
         
         resolver = RepoResolver()
+        
+        # 显示仓库下载状态
+        from pathlib import Path as PathLib
+        repo_name = PathLib(repo_url.rstrip('/')).name
+        if repo_name.endswith('.git'):
+            repo_name = repo_name[:-4]
+        
+        temp_repos_path = Path(__file__).parent / "temp_repos" / repo_name
+        if temp_repos_path.exists():
+            console.print(f"\n[bold green]✓[/bold green] [green]检测到本地仓库缓存[/green]")
+            console.print(f"  仓库: [cyan]{repo_name}[/cyan]")
+            console.print(f"  路径: [dim]{temp_repos_path}[/dim]")
+            console.print(f"  [yellow]正在同步最新代码...[/yellow]")
+        else:
+            console.print(f"\n[yellow]⚠ 正在克隆仓库...[/yellow]")
+        
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
             task = progress.add_task("[cyan]正在扫描仓库...", total=None)
             snapshot = asyncio.run(resolver.resolve(repo_url))
@@ -505,17 +521,27 @@ def analyze(
         dag_scheduler = DAGScheduler()
         task_names = dag_scheduler.get_execution_order()
         
-        # 创建 Dashboard
+        # 先创建 Orchestrator（内部会初始化 LLMClient）
+        orchestrator = AIOrchestrator()
+        
+        # 从 LLMClient 获取真实运行时的模型信息
+        model_name = orchestrator._llm_client.model
+        provider_name = orchestrator._llm_client.provider
+        
+        logger.info(f"Dashboard Runtime Model: {model_name}")
+        logger.info(f"Dashboard Runtime Provider: {provider_name}")
+        
+        # 创建 Dashboard，注入真实的 runtime 信息
         dashboard = CLIDashboard(
             repo_name=snapshot.repo_name,
-            model_name="qwen3-coder-free",  # TODO: 从配置读取
-            provider_name="qwen",  # TODO: 从配置读取
+            model_name=model_name,
+            provider_name=provider_name,
             task_names=task_names,
             console=console,
         )
         
-        # 创建 Orchestrator 并传入 Dashboard
-        orchestrator = AIOrchestrator(dashboard=dashboard)
+        # 将 Dashboard 注入到 Orchestrator
+        orchestrator._dashboard = dashboard
         analysis_result = orchestrator.run(ai_context)
         
         phase4_elapsed = time.time() - phase4_start
@@ -562,8 +588,17 @@ def analyze(
         
         # 最后清理临时克隆目录（在所有阶段完成后）
         if resolver.is_temp_clone:
-            logger.info("开始清理临时克隆目录")
-            asyncio.run(resolver.github_cloner.cleanup())
+            # 根据缓存模式决定是否清理
+            should_cleanup = asyncio.run(resolver.cache_manager.should_cleanup())
+            
+            if should_cleanup:
+                logger.info("开始清理临时克隆目录")
+                asyncio.run(resolver.github_cloner.cleanup())
+                console.print(f"\n[bold yellow]✓[/bold yellow] [yellow]已自动清理临时仓库[/yellow]")
+            else:
+                logger.info(f"跳过清理，仓库保留在：{snapshot.repo_path}")
+                console.print(f"\n[bold green]✓[/bold green] [green]仓库已保留：{Path(snapshot.repo_path).name}[/green]")
+            
             resolver.is_temp_clone = False
         
         return analysis_result

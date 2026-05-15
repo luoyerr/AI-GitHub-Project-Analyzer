@@ -17,6 +17,7 @@ from .repo_resolver import RepoResolver
 from .local_scanner import LocalScanner
 from .github_cloner import GitHubCloner
 from .file_scanner import FileScanner
+from .repo_cache_manager import RepoCacheManager
 
 __all__ = [
     'RepositorySnapshot',
@@ -27,4 +28,5 @@ __all__ = [
     'LocalScanner',
     'GitHubCloner',
     'FileScanner',
+    'RepoCacheManager',
 ]

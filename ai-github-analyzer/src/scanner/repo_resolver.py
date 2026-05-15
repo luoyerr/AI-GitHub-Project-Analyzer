@@ -17,6 +17,7 @@ from .models import RepositorySnapshot
 from .local_scanner import LocalScanner
 from .github_cloner import GitHubCloner
 from .file_scanner import FileScanner
+from .repo_cache_manager import RepoCacheManager
 
 
 class RepoResolver:
@@ -26,6 +27,7 @@ class RepoResolver:
         """初始化解析器。"""
         self.local_scanner = LocalScanner()
         self.github_cloner = GitHubCloner()
+        self.cache_manager = RepoCacheManager()
         self.is_temp_clone = False  # 标记是否是临时克隆
     
     async def resolve(self, repo_input: str) -> RepositorySnapshot:
@@ -109,8 +111,8 @@ class RepoResolver:
         """
         logger.info("处理 GitHub URL")
         
-        # 克隆仓库
-        cloned_path = await self.github_cloner.clone(repo_url)
+        # 使用缓存管理器获取仓库路径
+        cloned_path, is_new_clone = await self.github_cloner.clone(repo_url)
         self.is_temp_clone = True
         
         try:

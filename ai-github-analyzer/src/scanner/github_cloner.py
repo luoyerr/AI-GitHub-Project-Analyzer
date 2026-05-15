@@ -13,6 +13,7 @@ import asyncio
 import gc
 import time
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Optional
 from loguru import logger
@@ -30,20 +31,21 @@ class GitHubCloner:
         self.temp_dir: Optional[Path] = None
         self._repo_name: Optional[str] = None  # 记录仓库名称用于安全检查
     
-    async def clone(self, repo_url: str) -> Path:
+    async def clone(self, repo_url: str, force_fresh: bool = False) -> tuple[Path, bool]:
         """
-        克隆 GitHub 仓库
+        克隆或更新 GitHub 仓库
         
         Args:
             repo_url: GitHub 仓库 URL
+            force_fresh: 是否强制重新克隆，即使已存在本地仓库
             
         Returns:
-            Path: 克隆后的本地路径
+            tuple[Path, bool]: (克隆后的本地路径, 是否是新克隆)
             
         Raises:
             RuntimeError: 克隆失败
         """
-        logger.info(f"开始克隆仓库：{repo_url}")
+        logger.info(f"开始处理仓库：{repo_url}")
         
         try:
             # 提取仓库名称
@@ -60,22 +62,34 @@ class GitHubCloner:
             # 目标路径：temp_repos/<repo_name>
             self.temp_dir = temp_repos_dir / self._repo_name
             
-            # 如果目录已存在，先清理（避免冲突）
-            if self.temp_dir.exists():
-                logger.warning(f"检测到已存在的目录，先清理：{self.temp_dir}")
-                await self._force_cleanup(self.temp_dir)
+            is_new_clone = True
             
-            # 执行 git clone --depth 1
-            await self._execute_clone(repo_url, self.temp_dir)
+            # 检查是否仓库已存在
+            if self.temp_dir.exists() and not force_fresh:
+                logger.info(f"检测到本地仓库缓存: {self.temp_dir}")
+                logger.info("正在同步最新代码...")
+                
+                # 执行 git pull 更新现有仓库
+                await self._git_pull(self.temp_dir)
+                logger.info("更新完成")
+                is_new_clone = False
+            else:
+                # 如果目录已存在且需要强制克隆，先清理
+                if self.temp_dir.exists():
+                    logger.warning(f"检测到已存在的目录，先清理：{self.temp_dir}")
+                    await self._force_cleanup(self.temp_dir)
+                
+                # 执行 git clone --depth 1
+                await self._execute_clone(repo_url, self.temp_dir)
+                logger.info(f"克隆成功：{self.temp_dir}")
             
-            logger.info(f"克隆成功：{self.temp_dir}")
-            return self.temp_dir
+            return self.temp_dir, is_new_clone
             
         except Exception as e:
-            logger.error(f"克隆失败：{e}")
+            logger.error(f"处理仓库失败：{e}")
             # 失败时自动清理
             await self.cleanup()
-            raise RuntimeError(f"克隆仓库失败：{str(e)}")
+            raise RuntimeError(f"处理仓库失败：{str(e)}")
     
     async def _execute_clone(self, repo_url: str, target_path: Path):
         """
@@ -129,6 +143,56 @@ class GitHubCloner:
             raise RuntimeError(f"执行克隆命令失败：{str(e)}")
         finally:
             # 确保进程资源释放
+            if process and process.returncode is None:
+                try:
+                    process.kill()
+                    await process.wait()
+                except Exception:
+                    pass
+    
+    async def _git_pull(self, repo_path: Path):
+        """
+        执行 git pull 更新已有仓库
+        
+        Args:
+            repo_path: 仓库路径
+        """
+        cmd = ["git", "-C", str(repo_path), "pull"]
+        
+        logger.debug(f"执行命令：{' '.join(cmd)}")
+        
+        process = None
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(),
+                timeout=60  # pull 超时 60 秒
+            )
+            
+            if process.returncode != 0:
+                error_msg = stderr.decode('utf-8', errors='ignore').strip()
+                logger.warning(f"Git pull 失败（将继续使用当前版本）：{error_msg}")
+            else:
+                logger.debug(f"Pull 输出：{stdout.decode('utf-8', errors='ignore')}")
+        
+        except asyncio.TimeoutError:
+            if process:
+                process.kill()
+                await process.wait()
+            logger.warning(f"Git pull 超时（将继续使用当前版本）")
+        
+        except FileNotFoundError:
+            raise RuntimeError("未找到 git 命令，请确保已安装 Git")
+        
+        except Exception as e:
+            logger.warning(f"Git pull 异常（将继续使用当前版本）：{e}")
+        
+        finally:
             if process and process.returncode is None:
                 try:
                     process.kill()

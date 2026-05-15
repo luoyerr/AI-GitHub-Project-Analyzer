@@ -22,6 +22,7 @@ from .ai_context import (
     TechStackContext,
 )
 from .prompt_result import PromptResult, TokenUsage
+from .llm_response import LLMResponse
 from .analysis_result import (
     AnalysisResult as FinalAnalysisResult,
     ArchitectureDiagram,
@@ -59,6 +60,7 @@ __all__ = [
     # Prompt 结果模型
     "PromptResult",
     "TokenUsage",
+    "LLMResponse",
     # 分析结果模型
     "FinalAnalysisResult",
     "TechStackAnalysis",

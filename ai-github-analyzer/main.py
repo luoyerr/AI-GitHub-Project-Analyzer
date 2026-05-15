@@ -8,6 +8,7 @@ Usage:
 # Windows 控制台 UTF-8 编码设置
 import sys
 import io
+import time
 
 if sys.platform == "win32":
     # 确保 Windows 控制台使用 UTF-8 编码
@@ -28,6 +29,9 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from src.scanner import RepoResolver, RepositorySnapshot
 from src.analyzer.tech_stack import TechStackAnalyzer
+from src.context_builder import ContextBuilder
+from src.ai_engine.orchestrator import AIOrchestrator
+from src.report.generator import MarkdownReportGenerator
 
 app = typer.Typer(
     name="ai-github-analyzer",
@@ -443,83 +447,100 @@ def analyze(
     ),
 ):
     """
-    分析 GitHub 仓库。
+    全链路分析 GitHub 仓库。
     
-    Phase 1 - Repository Scanner:
-    - 扫描仓库结构
-    - 生成 RepositorySnapshot
-    - 支持本地路径和 GitHub URL
+    流程：
+    Phase 1: 扫描仓库 (Scanner)
+    Phase 2: 技术栈分析 (Tech Stack Analyzer)
+    Phase 3: 上下文构建 (Context Builder)
+    Phase 4: AI 分析 (AI Orchestrator)
+    Phase 5: 报告生成 (Markdown Generator)
     """
-    logger.info(f"开始分析：{repo_url}")
-    
-    # 显示欢迎面板
-    console.print(
-        Panel.fit(
-            f"[bold blue]正在扫描仓库[/bold blue]\n[cyan]{repo_url}[/cyan]",
-            title="🚀 AI GitHub Analyzer - Phase 1",
-            border_style="blue",
-        )
-    )
+    total_start_time = time.time()
+    logger.info(f"开始全链路分析：{repo_url}")
     
     try:
-        # 创建仓库解析器
-        resolver = RepoResolver()
+        # ==================== Phase 1: 扫描仓库 ====================
+        console.print(Panel.fit("[bold blue]Phase 1: 扫描仓库[/bold blue]", border_style="blue"))
+        phase1_start = time.time()
         
-        # 异步执行扫描
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
+        resolver = RepoResolver()
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
             task = progress.add_task("[cyan]正在扫描仓库...", total=None)
-            
-            # 运行异步扫描
             snapshot = asyncio.run(resolver.resolve(repo_url))
-            
             progress.update(task, description="[green]扫描完成！")
         
-        # 显示扫描结果
         _display_snapshot(console, snapshot)
+        phase1_elapsed = time.time() - phase1_start
+        console.print(f"[bold green]✓ Phase 1 完成，耗时: {phase1_elapsed:.2f}秒[/bold green]\n")
         
-        # 执行技术栈分析（通过 TechStackAnalyzer）
-        console.print("\n[bold blue]🔍 开始技术栈分析...[/bold blue]\n")
+        # ==================== Phase 2: 技术栈分析 ====================
+        console.print(Panel.fit("[bold blue]Phase 2: 技术栈分析[/bold blue]", border_style="blue"))
+        phase2_start = time.time()
         
-        try:
-            analyzer = TechStackAnalyzer()
-            tech_stack = analyzer.analyze(snapshot)
-            
-            # 显示技术栈分析结果
-            _display_tech_stack(console, tech_stack)
-            
-        except Exception as e:
-            # 技术栈分析失败不影响主流程
-            logger.warning(f"技术栈分析失败：{str(e)}")
-            console.print("[bold yellow]⚠️  技术栈分析失败，但仓库扫描成功。[/bold yellow]\n")
+        analyzer = TechStackAnalyzer()
+        tech_stack = analyzer.analyze(snapshot)
+        _display_tech_stack(console, tech_stack)
         
-        finally:
-            # 清理临时克隆目录（在技术栈分析完成后）
-            if resolver.is_temp_clone:
-                logger.info("开始清理临时克隆目录")
-                asyncio.run(resolver.github_cloner.cleanup())
-                resolver.is_temp_clone = False
+        phase2_elapsed = time.time() - phase2_start
+        console.print(f"[bold green]✓ Phase 2 完成，耗时: {phase2_elapsed:.2f}秒[/bold green]\n")
         
-        logger.info("仓库扫描成功完成")
+        # 清理临时克隆目录
+        if resolver.is_temp_clone:
+            logger.info("开始清理临时克隆目录")
+            asyncio.run(resolver.github_cloner.cleanup())
+            resolver.is_temp_clone = False
         
-        return snapshot
+        # ==================== Phase 3: 上下文构建 ====================
+        console.print(Panel.fit("[bold blue]Phase 3: 上下文构建[/bold blue]", border_style="blue"))
+        phase3_start = time.time()
         
-    except ValueError as e:
-        error_msg = str(e)
-        console.print(f"\n[bold red]错误：[/bold red] {error_msg}")
-        logger.error(error_msg)
-        sys.exit(1)
-    except RuntimeError as e:
-        error_msg = str(e)
-        console.print(f"\n[bold red]运行时错误：[/bold red] {error_msg}")
-        logger.error(error_msg)
-        sys.exit(1)
+        context_builder = ContextBuilder()
+        ai_context = context_builder.build(snapshot, tech_stack)
+        
+        phase3_elapsed = time.time() - phase3_start
+        console.print(f"[bold green]✓ Phase 3 完成，选中文件数: {len(ai_context.files)}，耗时: {phase3_elapsed:.2f}秒[/bold green]\n")
+        
+        # ==================== Phase 4: AI 分析 ====================
+        console.print(Panel.fit("[bold blue]Phase 4: AI 分析[/bold blue]", border_style="blue"))
+        phase4_start = time.time()
+        
+        orchestrator = AIOrchestrator()
+        analysis_result = orchestrator.run(ai_context)
+        
+        phase4_elapsed = time.time() - phase4_start
+        console.print(f"[bold green]✓ Phase 4 完成，耗时: {phase4_elapsed:.2f}秒[/bold green]\n")
+        
+        # ==================== Phase 5: 报告生成 ====================
+        console.print(Panel.fit("[bold blue]Phase 5: 报告生成[/bold blue]", border_style="blue"))
+        phase5_start = time.time()
+        
+        report_generator = MarkdownReportGenerator()
+        repo_path = Path(snapshot.repo_path)
+        result = report_generator.generate(analysis_result, repo_path)
+        
+        if result["success"]:
+            console.print(f"[bold green]✓ 报告已生成: {result['output_path']}[/bold green]")
+        else:
+            console.print(f"[bold red]✗ 报告生成失败: {result.get('error')}[/bold red]")
+        
+        phase5_elapsed = time.time() - phase5_start
+        console.print(f"[bold green]✓ Phase 5 完成，耗时: {phase5_elapsed:.2f}秒[/bold green]\n")
+        
+        # ==================== 总结 ====================
+        total_elapsed = time.time() - total_start_time
+        summary_panel = Panel.fit(
+            f"[bold green]全链路分析成功完成！[/bold green]\n总耗时: [bold]{total_elapsed:.2f}秒[/bold]",
+            title="🎉 分析结果",
+            border_style="green"
+        )
+        console.print(summary_panel)
+        
+        return analysis_result
+        
     except Exception as e:
-        error_msg = f"未知错误：{str(e)}"
-        console.print(f"\n[bold red]错误：[/bold red] {error_msg}")
+        error_msg = f"分析过程中发生错误: {str(e)}"
+        console.print(f"\n[bold red]✗ {error_msg}[/bold red]")
         logger.exception(error_msg)
         sys.exit(1)
 

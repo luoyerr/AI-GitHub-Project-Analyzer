@@ -5,7 +5,19 @@
 从扫描结果中构建完整的分析上下文。
 """
 
-from typing import Any, Dict
+from pathlib import Path
+from typing import List
+
+from loguru import logger
+
+from .selector import ContextSelector
+from .prioritizer import ContextPrioritizer
+from .file_reader import ContextFileReader
+from .truncator import ContextTruncator
+from .models import ContextFile, FileCategory, ContextPriority
+from ..scanner.models import RepositorySnapshot
+from ..models.ai_context import AIContext, FileContext, DirectoryContext, TechStackContext
+from ..models.tech_stack import ProjectTechStack
 
 
 class ContextBuilder:
@@ -26,43 +38,160 @@ class ContextBuilder:
 
     def __init__(self) -> None:
         """初始化上下文构建器。"""
-        # TODO(context-builder): 初始化各子组件实例
-        pass
+        self.selector = ContextSelector()
+        self.prioritizer = ContextPrioritizer()
+        self.reader = ContextFileReader()
+        self.truncator = ContextTruncator()
+        logger.info("上下文构建器初始化完成")
 
-    def build(self, scan_result: Dict[str, Any]) -> Dict[str, Any]:
+    def build(self, snapshot: RepositorySnapshot, tech_stack: ProjectTechStack) -> AIContext:
         """
-        构建完整的分析上下文。
+        构建完整的 AI 分析上下文。
 
         参数：
-            scan_result: 扫描结果字典，包含文件列表、目录结构等信息
+            snapshot: 仓库扫描快照
+            tech_stack: 技术栈分析结果
 
         返回：
-            构建完成的上下文字典，包含处理后的文件内容和元数据
+            构建完成的 AIContext 对象
 
         流程：
             1. 调用 selector 进行文件筛选
             2. 调用 prioritizer 进行优先级排序
             3. 调用 reader 安全读取文件内容
             4. 调用 truncator 对大文件进行智能裁剪
-            5. 打包所有结果为最终上下文
+            5. 打包所有结果为 AIContext
         """
-        # TODO(context-builder): 实现完整的构建流程
-        # 1. selected_files = self.selector.select(scan_result)
-        # 2. prioritized_files = self.prioritizer.prioritize(selected_files)
-        # 3. read_files = self.reader.read(prioritized_files)
-        # 4. truncated_files = self.truncator.truncate(read_files)
-        # 5. return self._bundle(truncated_files)
-        pass  # type: ignore[empty-body]
+        logger.info(f"开始构建 AI 上下文，仓库: {snapshot.repo_name}")
+        
+        # 1. 智能文件筛选
+        selected_paths = self.selector.select(snapshot)
+        logger.info(f"文件筛选完成，选中 {len(selected_paths)} 个文件")
 
-    def _bundle(self, processed_files: list) -> Dict[str, Any]:
+        # 2. 优先级排序
+        prioritized_paths = self.prioritizer.prioritize(selected_paths)
+        logger.info("文件优先级排序完成")
+
+        # 3. 安全读取与 4. 智能裁剪
+        context_files: List[ContextFile] = []
+        for path in prioritized_paths:
+            read_result = self.reader.read(path)
+            if read_result and read_result.content:
+                # 确定文件分类和优先级（简化处理，实际可根据路径进一步细化）
+                category = self._guess_category(path)
+                priority = self._guess_priority(path)
+                
+                context_file = ContextFile(
+                    path=str(path),
+                    relative_path=str(path.relative_to(snapshot.repo_path)),
+                    category=category,
+                    priority=priority,
+                    language=path.suffix.lstrip('.'),
+                    size=read_result.size,
+                    content=read_result.content,
+                    is_truncated=read_result.is_truncated,
+                    truncated_reason=read_result.truncated_reason,
+                    estimated_tokens=0,  # 简化处理，暂不计算 token
+                )
+                
+                # 执行裁剪
+                truncated_file = self.truncator.truncate(context_file)
+                context_files.append(truncated_file)
+
+        logger.info(f"文件读取与裁剪完成，成功处理 {len(context_files)} 个文件")
+
+        # 5. 打包为 AIContext
+        ai_context = self._bundle_to_ai_context(snapshot, tech_stack, context_files)
+        logger.info("AI 上下文构建完成")
+        
+        return ai_context
+
+    def _guess_category(self, path: Path) -> FileCategory:
+        """根据路径猜测文件分类。"""
+        name = path.name.lower()
+        parts = path.parts
+        
+        if any(p in ['controller', 'service', 'api', 'domain', 'model'] for p in parts):
+            return FileCategory.SOURCE
+        if name.endswith(('.yml', '.yaml', '.json', '.toml', '.env.example')):
+            return FileCategory.CONFIG
+        if name.startswith(('test_', 'test')) or 'test' in parts:
+            return FileCategory.TEST
+        if name.endswith(('.md', '.txt')):
+            return FileCategory.DOCUMENT
+        if name in ['main.py', 'app.py', 'index.js', 'main.go']:
+            return FileCategory.ENTRY
+            
+        return FileCategory.SOURCE
+
+    def _guess_priority(self, path: Path) -> ContextPriority:
+        """根据路径猜测文件优先级。"""
+        name = path.name.lower()
+        if name in ['readme.md', 'dockerfile', 'package.json', 'pom.xml', 'go.mod']:
+            return ContextPriority.S
+        if name in ['main.py', 'app.py', 'index.ts', 'main.go']:
+            return ContextPriority.A
+        if 'controller' in str(path) or 'service' in str(path):
+            return ContextPriority.B
+        return ContextPriority.C
+
+    def _bundle_to_ai_context(
+        self, 
+        snapshot: RepositorySnapshot, 
+        tech_stack: ProjectTechStack, 
+        context_files: List[ContextFile]
+    ) -> AIContext:
         """
-        将处理后的文件打包为最终上下文格式。
+        将处理后的文件打包为 AIContext 模型。
 
         参数：
-            processed_files: 经过所有处理步骤的文件列表
+            snapshot: 仓库扫描快照
+            tech_stack: 技术栈分析结果
+            context_files: 经过处理的文件列表
 
         返回：
-            打包完成的上下文字典
+            AIContext 对象
         """
-        # TODO(context-builder): 实现上下文打包逻辑
-        pass  # type: ignore[empty-body]
+        # 转换文件列表
+        file_contexts = [
+            FileContext(
+                file_path=cf.relative_path,
+                content=cf.content or "",
+                language=cf.language,
+                line_count=len((cf.content or "").splitlines()),
+                is_truncated=cf.is_truncated,
+                priority=cf.priority.value,
+                size_bytes=cf.size,
+            )
+            for cf in context_files
+        ]
+
+        # 转换目录列表
+        dir_contexts = [
+            DirectoryContext(
+                path=d.relative_path,
+                children=[],  # 简化处理，暂不填充子节点
+                depth=len(Path(d.relative_path).parts),
+            )
+            for d in snapshot.directories
+        ]
+
+        # 转换技术栈
+        ts_context = TechStackContext(
+            languages=tech_stack.languages,
+            frameworks=tech_stack.frameworks,
+            dependencies=tech_stack.libraries,
+            build_tools=tech_stack.build_tools,
+            config_files=[],  # 可以从 context_files 中提取
+            confidence=tech_stack.confidence,
+        )
+
+        return AIContext(
+            repo_name=snapshot.repo_name,
+            repo_path=snapshot.repo_path,
+            files=file_contexts,
+            directories=dir_contexts,
+            languages=tech_stack.languages,
+            tech_stack=ts_context,
+            token_budget=50000,  # 默认预算
+        )

@@ -142,7 +142,7 @@ mypy src/
 
 ## 📖 文档
 
-- [架构设计](ARCHITECTURE.md)
+- [架构设计](outputs/docs/v1/ARCHITECTURE.md)
 - [代理规范](AGENTS.md)
 - [设计文档](docs/design-docs/)
 

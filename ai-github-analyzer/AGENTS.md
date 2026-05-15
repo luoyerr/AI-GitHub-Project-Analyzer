@@ -1,496 +1,329 @@
-# 代理规范
+# AI GitHub Project Analyzer - Agent 行为规范
 
-## 概述
+**版本**: v2.0
+ **适用系统**: AI-GitHub-Project-Analyzer
+ **架构类型**: Five-Layer Pipeline (Harness-inspired)
 
-本文档定义了 AI GitHub Analyzer 的 AI 代理规范。每个代理负责一个专门的分析任务，并在协调框架内独立运行。
+------
 
-## 代理架构
+# 1. Agent 总目标
 
-所有代理遵循通用接口：
+所有参与本项目的 AI / 自动化 Agent 必须遵循以下目标：
 
-```python
-class BaseAgent:
-    def analyze(self, context: AnalysisContext) -> AgentResult:
-        """执行分析并返回结果。"""
-        pass
-    
-    def validate_input(self, context: AnalysisContext) -> bool:
-        """验证输入上下文是否充分。"""
-        pass
+> 将任意 GitHub / 本地代码仓库 → 转换为结构化企业级分析报告
+
+输出必须是：
+
+- 可读
+- 可扩展
+- 可验证
+- 可复现
+
+------
+
+# 2. 系统本质（必须理解）
+
+本系统不是：
+
+- ❌ Multi-Agent System
+- ❌ AutoGen / CrewAI
+- ❌ LangGraph DAG runtime
+
+本系统是：
+
+> ✅ Five-Layer Pipeline + Task Executor Architecture
+
+核心特征：
+
+- 串行执行（8 Tasks）
+- 静态 DAG
+- Prompt 驱动 LLM
+- 无 Agent 自主决策
+
+------
+
+# 3. Five-Layer 架构约束
+
+所有 Agent 行为必须严格遵循：
+
+## Layer 1 - Scanner
+
+职责：
+
+- 仓库解析
+- GitHub clone
+- 文件树生成
+
+禁止：
+
+- ❌ 解析业务逻辑
+- ❌ 做 AI 判断
+
+------
+
+## Layer 2 - Tech Stack Analyzer
+
+职责：
+
+- 规则识别技术栈
+- 基于文件名 / 配置文件判断
+
+禁止：
+
+- ❌ 使用 LLM
+- ❌ 推测业务架构
+
+------
+
+## Layer 3 - Context Builder
+
+职责：
+
+- 文件筛选
+- 优先级排序
+- token 控制
+
+禁止：
+
+- ❌ 修改文件内容
+- ❌ 推理业务逻辑
+
+------
+
+## Layer 4 - AI Engine（核心）
+
+职责：
+
+- 执行 8 个 Task
+- 调用 LLM
+- 生成结构化分析
+
+关键约束：
+
+- 必须使用 PromptManager
+- 必须使用 BaseTask 模板
+- 必须按 DAG 顺序执行
+- 不允许跳过 Task
+
+------
+
+## Layer 5 - Report Generator
+
+职责：
+
+- Markdown 生成
+- 格式化输出
+- 写入 PROJECT_ANALYSIS.md
+
+禁止：
+
+- ❌ 修改分析逻辑
+- ❌ 重新解释 LLM 输出
+
+------
+
+# 4. 8 Task 执行规范
+
+必须严格执行顺序：
+
+```
+1. tech_stack
+2. directory_structure
+3. core_modules
+4. startup_flow
+5. config_analysis
+6. risks
+7. architecture_diagram
+8. learning_path
 ```
 
-## 代理类型
+## Task 行为规则
 
-### 1. 架构代理
+每个 Task 必须：
 
-**目的**：分析仓库架构和设计模式。
+### 必须
 
-**职责**：
-- 识别架构风格（单体、微服务、分层等）
-- 检测设计模式（MVC、MVVM、Repository、Factory 等）
-- 评估模块组织和边界
-- 评估关注点分离
-- 识别耦合和 cohesion 问题
+- 使用 PromptManager
+- 使用 AIContext
+- 输出结构化 JSON
+- 通过 validate_result()
 
-**输入上下文**：
-- 文件结构和组织
-- 模块依赖关系
-- 配置文件
-- 入口点和主模块
+### 禁止
 
-**输出**：
-```python
-class ArchitectureAnalysis(AgentResult):
-    architectural_style: str
-    design_patterns: List[str]
-    module_structure: ModuleAnalysis
-    coupling_score: float
-    cohesion_score: float
-    recommendations: List[str]
+- ❌ return raw text
+- ❌ skip LLM
+- ❌ hardcode result
+- ❌ cross-task mutation
+
+------
+
+# 5. Prompt 规范（非常关键）
+
+所有 Prompt 必须满足：
+
+## 规则
+
+- 必须在 `prompts/*.md`
+- 必须使用 `{{variable}}`
+- 必须 UTF-8
+- 必须模块化
+
+## 禁止
+
+- ❌ Prompt 写在 Python 代码中
+- ❌ 动态拼接业务逻辑
+- ❌ 隐式 prompt injection
+
+------
+
+# 6. LLM 调用规范
+
+所有 LLM 调用必须：
+
+## 使用统一接口
+
+```
+LLMClient.generate()
 ```
 
-**提示策略**：
-- 分析目录结构以获取架构线索
-- 检查导入模式和依赖关系
-- 审查配置文件以获取框架提示
-- 评估代码组织原则
+## 必须包含：
 
----
+- system_prompt
+- user_prompt
+- temperature = 0.7
+- max_tokens ≤ 4000
 
-### 2. 质量代理
+------
 
-**目的**：评估代码质量和对最佳实践的遵守情况。
+## 禁止
 
-**职责**：
-- 评估代码复杂度（圈复杂度、认知复杂度）
-- 检查命名约定一致性
-- 评估文档覆盖率
-- 识别代码异味和反模式
-- 评估测试覆盖率和质量
-- 检查错误处理实践
+- ❌ 直接调用 OpenAI SDK（绕过 LLMClient）
+- ❌ 多 provider 混用未统一
+- ❌ 无 system prompt
 
-**输入上下文**：
-- 源代码文件
-- 测试文件和结构
-- 文档文件
-- Lint 配置
+------
 
-**输出**：
-```python
-class QualityAnalysis(AgentResult):
-    overall_score: float
-    complexity_metrics: ComplexityMetrics
-    documentation_score: float
-    test_coverage_estimate: float
-    code_smells: List[CodeSmell]
-    best_practices_violations: List[str]
-    improvement_suggestions: List[str]
+# 7. 数据流约束
+
+必须遵循：
+
+```
+Repo
+ → RepositorySnapshot
+ → ProjectTechStack
+ → AIContext
+ → TaskContext
+ → PromptResult[8]
+ → AnalysisResult
+ → Markdown
 ```
 
-**提示策略**：
-- 从不同模块采样代表性文件
-- 分析函数和类的复杂度
-- 审查注释与代码的比例
-- 检查常见反模式
-- 评估错误处理策略
+## 禁止
 
----
+- ❌ 跳过 AIContext
+- ❌ Task 直接访问文件系统
+- ❌ Task 之间直接通信
 
-### 3. 安全代理
+------
 
-**目的**：识别潜在的安全漏洞和风险。
+# 8. DAG 执行规则
 
-**职责**：
-- 检测硬编码的秘密和凭据
-- 识别不安全的依赖
-- 检查常见漏洞模式
-- 评估输入验证实践
-- 审查身份验证/授权实现
-- 标记危险操作（eval、exec 等）
+当前系统：
 
-**输入上下文**：
-- 依赖文件（requirements.txt、package.json 等）
-- 配置文件
-- 身份验证相关代码
-- API 端点实现
+> Static DAG (Serial Execution)
 
-**输出**：
-```python
-class SecurityAnalysis(AgentResult):
-    risk_level: RiskLevel  # LOW, MEDIUM, HIGH, CRITICAL
-    vulnerabilities: List[Vulnerability]
-    insecure_dependencies: List[DependencyIssue]
-    security_recommendations: List[str]
-    compliance_issues: List[str]
+## 规则
+
+- 必须顺序执行
+- 不允许乱序 Task
+- 不允许并行（当前版本）
+
+## 未来扩展（禁止当前实现）
+
+- ❌ Parallel execution
+- ❌ Dynamic DAG
+- ❌ Agent-based scheduling
+
+------
+
+# 9. 代码修改规范（非常重要）
+
+## 修改优先级
+
+1. Prompt（优先）
+2. Task Parser
+3. Context Builder
+4. LLM Client
+5. Scanner（最后）
+
+------
+
+## 禁止行为
+
+- ❌ 修改 Layer 顺序
+- ❌ 跳过 Context Builder
+- ❌ 直接修改 AnalysisResult 结构
+
+------
+
+# 10. 错误处理规范
+
+## 必须行为
+
+- 捕获 LLM 异常
+- 记录失败 Task
+- 允许 Task fail but continue
+
+## 禁止
+
+- ❌ crash entire pipeline
+- ❌ silent failure
+- ❌ ignore LLM error
+
+------
+
+# 11. 输出规范
+
+最终必须生成：
+
+```
+PROJECT_ANALYSIS.md
 ```
 
-**提示策略**：
-- 扫描已知漏洞模式
-- 根据 CVE 数据库审查依赖版本
-- 检查安全编码实践
-- 分析身份验证流程
-- 检查数据处理和清理
+必须包含：
 
----
+- 8 个章节
+- Mermaid 图
+- 技术栈总结
+- 风险分析
+- 学习路径
 
-### 4. 文档代理
+------
 
-**目的**：评估文档完整性和质量。
+# 12. 扩展规则（未来演进）
 
-**职责**：
-- 评估 README 质量和完整性
-- 检查 API 文档覆盖率
-- 评估内联代码注释
-- 审查文档结构
-- 识别缺失的文档区域
-- 检查过时的文档
+允许扩展：
 
-**输入上下文**：
-- README.md 和其他 Markdown 文件
-- Docstring 和内联注释
-- API 规范文件（OpenAPI、GraphQL schema）
-- 文档目录
+- 新 Task（必须注册到 TaskRegistry）
+- 新 Prompt
+- 新 Parser
 
-**输出**：
-```python
-class DocumentationAnalysis(AgentResult):
-    completeness_score: float
-    readme_quality: float
-    api_documentation_coverage: float
-    code_comment_ratio: float
-    missing_documentation: List[str]
-    documentation_issues: List[str]
-    improvement_priorities: List[str]
-```
+禁止：
 
-**提示策略**：
-- 根据最佳实践清单评估 README
-- 检查入门指南
-- 评估 API 文档完整性
-- 审查代码示例和教程
-- 识别文档覆盖率的空白
+- ❌ 修改核心 Pipeline
+- ❌ 改变 5 Layer 架构
+- ❌ 破坏 DAG 顺序
 
----
+------
 
-### 5. 建议代理
+# 13. Agent 行为总结（最重要）
 
-**目的**：生成可操作的改进建议。
+所有 Agent 必须遵守一句话原则：
 
-**职责**：
-- 综合所有其他代理的发现
-- 按影响优先级排序建议
-- 提供具体、可操作的步骤
-- 建议工具和资源
-- 创建改进路线图
-- 估算每个建议的工作量
+> “只做本层该做的事，不跨层，不越权，不自作主张”
 
-**输入上下文**：
-- 所有其他代理的结果
-- 仓库目标（如果指定）
-- 行业最佳实践
-- 类似仓库模式
+------
 
-**输出**：
-```python
-class RecommendationAnalysis(AgentResult):
-    quick_wins: List[Recommendation]
-    high_impact: List[Recommendation]
-    long_term_improvements: List[Recommendation]
-    priority_matrix: PriorityMatrix
-    estimated_effort: EffortEstimate
-    resource_links: List[str]
-```
+# 14. 一句话架构认知
 
-**提示策略**：
-- 聚合所有分析的见解
-- 应用优先级框架（影响 vs. 工作量）
-- 参考行业标准和基准
-- 提供具体示例和资源
-- 考虑仓库上下文和目标
-
----
-
-### 6. 依赖代理
-
-**目的**：分析项目依赖及其健康状况。
-
-**职责**：
-- 映射完整的依赖树
-- 识别过时的包
-- 检测未使用的依赖
-- 评估依赖健康状况（维护、社区）
-- 检查许可证兼容性
-- 识别依赖冲突
-
-**输入上下文**：
-- 依赖清单文件
-- 锁定文件（如果可用）
-- 导入语句
-- 包元数据
-
-**输出**：
-```python
-class DependencyAnalysis(AgentResult):
-    total_dependencies: int
-    direct_dependencies: int
-    transitive_dependencies: int
-    outdated_packages: List[PackageInfo]
-    unused_dependencies: List[str]
-    license_issues: List[LicenseIssue]
-    health_scores: Dict[str, float]
-    update_recommendations: List[str]
-```
-
-**提示策略**：
-- 准确解析依赖文件
-- 与包注册表交叉引用
-- 检查最后更新日期和维护活动
-- 分析下载统计数据和社区采用情况
-- 审查许可证兼容性
-
----
-
-### 7. 性能代理
-
-**目的**：识别性能瓶颈和优化机会。
-
-**职责**：
-- 检测低效算法
-- 识别 N+1 查询模式
-- 检查适当的缓存策略
-- 评估数据库查询效率
-- 审查异步/并发代码使用
-- 标记内存密集型操作
-
-**输入上下文**：
-- 数据库交互代码
-- API 端点实现
-- 循环和迭代模式
-- 缓存配置
-- async/await 使用
-
-**输出**：
-```python
-class PerformanceAnalysis(AgentResult):
-    bottlenecks: List[PerformanceIssue]
-    optimization_opportunities: List[Optimization]
-    complexity_warnings: List[str]
-    caching_recommendations: List[str]
-    database_optimization_tips: List[str]
-```
-
-**提示策略**：
-- 分析算法复杂度指标
-- 审查数据库访问模式
-- 检查正确的 async 使用
-- 识别冗余计算
-- 评估资源利用模式
-
----
-
-## 代理执行模型
-
-### 顺序执行 vs 并行执行
-
-**顺序执行**（存在依赖关系时）：
-```
-扫描器 → 分类器 → 上下文构建器 → 代理
-```
-
-**并行执行**（独立代理）：
-```
-架构代理 ──┐
-质量代理   ────┼→ 聚合器
-安全代理   ────┤
-文档代理 ──┘
-```
-
-### 超时处理
-
-每个代理具有可配置的超时：
-```python
-config = AgentConfig(
-    timeout=60,  # 秒
-    retry_count=2,
-    fallback_result=FallbackResult(...)
-)
-```
-
-### 错误恢复
-
-如果代理失败：
-1. 记录详细的错误信息
-2. 尝试重试（如果配置）
-3. 使用回退/默认结果
-4. 继续执行剩余代理
-5. 报告部分结果并附带警告
-
----
-
-## 提示工程指南
-
-### 提示结构
-
-每个代理提示应包括：
-
-1. **角色定义**：清晰的代理人格和专业领域
-2. **任务描述**：具体的分析目标
-3. **输入格式**：预期的数据结构
-4. **输出格式**：所需的响应结构
-5. **示例**：输入和输出示例
-6. **约束**：限制和边界
-7. **评估标准**：如何评估质量
-
-### 示例提示模板
-
-```markdown
-# 角色
-您是专注于 {domain} 的专家软件架构师。
-
-# 任务
-分析提供的仓库上下文并识别 {specific_aspects}。
-
-# 输入
-仓库上下文包括：
-- 文件结构：{file_tree}
-- 关键文件：{file_contents}
-- 元数据：{metadata}
-
-# 输出格式
-请按以下 JSON 结构提供您的分析：
-{
-  "findings": [...],
-  "score": 0.0,
-  "recommendations": [...]
-}
-
-# 约束
-- 仅关注 {scope}
-- 不要超出提供的数据做出假设
-- 保持具体和可操作
-
-# 示例
-示例 1：
-输入：...
-输出：...
-```
-
----
-
-## 代理配置
-
-### 环境变量
-
-```bash
-# AI 提供商配置
-AI_PROVIDER=openai  # 或 anthropic, azure 等
-AI_MODEL=gpt-4-turbo
-AI_API_KEY=your_api_key
-
-# 代理特定设置
-AGENT_TIMEOUT=60
-AGENT_MAX_RETRIES=2
-AGENT_PARALLEL_LIMIT=4
-
-# 功能标志
-ENABLE_ARCHITECTURE_AGENT=true
-ENABLE_QUALITY_AGENT=true
-ENABLE_SECURITY_AGENT=true
-ENABLE_DOCUMENTATION_AGENT=true
-ENABLE_RECOMMENDATION_AGENT=true
-ENABLE_DEPENDENCY_AGENT=true
-ENABLE_PERFORMANCE_AGENT=true
-```
-
-### Pydantic 设置模型
-
-```python
-class AgentSettings(BaseSettings):
-    provider: str = "openai"
-    model: str = "gpt-4-turbo"
-    api_key: SecretStr
-    timeout: int = 60
-    max_retries: int = 2
-    parallel_limit: int = 4
-    
-    class Config:
-        env_prefix = "AGENT_"
-```
-
----
-
-## 代理结果聚合
-
-协调器聚合所有代理的结果：
-
-```python
-class AggregatedResult(BaseModel):
-    architecture: Optional[ArchitectureAnalysis]
-    quality: Optional[QualityAnalysis]
-    security: Optional[SecurityAnalysis]
-    documentation: Optional[DocumentationAnalysis]
-    dependencies: Optional[DependencyAnalysis]
-    performance: Optional[PerformanceAnalysis]
-    recommendations: RecommendationAnalysis
-    
-    overall_score: float
-    critical_issues: List[str]
-    summary: str
-```
-
-聚合逻辑：
-1. 收集所有成功的代理结果
-2. 按重要性加权分数
-3. 识别跨领域问题
-4. 解决冲突的建议
-5. 生成统一摘要
-
----
-
-## 测试代理
-
-### 单元测试
-
-使用模拟上下文测试每个代理：
-```python
-def test_architecture_agent():
-    agent = ArchitectureAgent()
-    context = create_mock_context()
-    result = agent.analyze(context)
-    assert result.architectural_style is not None
-```
-
-### 集成测试
-
-测试代理交互：
-```python
-async def test_agent_orchestration():
-    orchestrator = AnalysisOrchestrator()
-    result = await orchestrator.run(config)
-    assert len(result.agents_executed) > 0
-```
-
-### 固定仓库
-
-维护具有已知特征的测试仓库：
-- 简单的 Flask 应用
-- 复杂的微服务架构
-- 低质量代码库
-- 文档完善的库
-- 存在安全漏洞的应用
-
----
-
-## 未来代理想法
-
-1. **可访问性代理**：检查 UI 可访问性合规性
-2. **合规代理**：验证监管合规性（GDPR、HIPAA）
-3. **本地化代理**：评估国际化准备情况
-4. **DevOps 代理**：评估 CI/CD 和部署实践
-5. **社区代理**：分析社区参与和贡献指南
-6. **成本代理**：估算云基础设施成本
-7. **迁移代理**：建议现代化路径
-
----
-
-*最后更新：2026-05-14*
+> Scanner → Structure → Context → LLM Tasks → Report

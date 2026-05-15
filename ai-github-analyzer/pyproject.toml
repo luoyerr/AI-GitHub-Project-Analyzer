@@ -57,3 +57,5 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
+# 骨架代码阶段允许空方法体
+disable_error_code = ["empty-body"]

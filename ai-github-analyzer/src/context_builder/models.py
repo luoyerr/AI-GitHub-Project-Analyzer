@@ -103,6 +103,30 @@ class ContextFile(BaseModel):
     )
 
 
+class FileReadResult(BaseModel):
+    """
+    文件读取结果模型。
+
+    表示单个文件的读取结果，包含文件内容、编码信息、
+    截断状态和文件大小等元数据。用于在 Context Builder
+    中传递文件读取的完整信息。
+    """
+
+    model_config = ConfigDict(
+        extra="ignore",
+        frozen=False,
+        str_strip_whitespace=True,
+    )
+
+    content: Optional[str] = Field(None, description="文件文本内容")
+    encoding: str = Field(..., description="检测到的文件编码")
+    is_truncated: bool = Field(False, description="文件内容是否被截断")
+    truncated_reason: Optional[str] = Field(
+        None, description="文件被截断的原因说明"
+    )
+    size: int = Field(..., description="文件实际大小（字节）")
+
+
 class ContextBundle(BaseModel):
     """
     上下文包模型。

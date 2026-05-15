@@ -7,7 +7,8 @@
 from typing import Any
 from loguru import logger
 
-from ...models import TaskContext, LearningPath
+from ...models.task_context import TaskContext
+from ...models.analysis_result import LearningPath
 from .base import BaseTask
 
 

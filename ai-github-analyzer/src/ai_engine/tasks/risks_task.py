@@ -7,7 +7,8 @@
 from typing import Any
 from loguru import logger
 
-from ...models import TaskContext, RiskAnalysis
+from ...models.task_context import TaskContext
+from ...models.analysis_result import RiskAnalysis
 from .base import BaseTask
 
 

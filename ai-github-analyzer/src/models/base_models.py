@@ -38,8 +38,8 @@ class AnalysisConfig(BaseModel):
     timeout: int = 300
 
 
-class AnalysisResult(BaseModel):
-    """最终分析结果结构。"""
+class BaseAnalysisResult(BaseModel):
+    """基础分析结果结构（旧版，保留用于兼容）。"""
     repo_info: RepositoryInfo
     status: AnalysisStatus = AnalysisStatus.PENDING
     summary: Optional[str] = None

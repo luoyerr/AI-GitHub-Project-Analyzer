@@ -8,7 +8,14 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 from loguru import logger
 
-from ...models import TaskContext, PromptResult
+# 使用绝对导入避免相对导入问题
+try:
+    from models.task_context import TaskContext
+    from models.prompt_result import PromptResult
+except ImportError:
+    # 如果作为包的一部分运行，使用相对导入
+    from ...models.task_context import TaskContext
+    from ...models.prompt_result import PromptResult
 
 
 class BaseTask(ABC):

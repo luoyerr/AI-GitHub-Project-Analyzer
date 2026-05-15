@@ -8,7 +8,7 @@ from .base_models import (
     AnalysisStatus,
     RepositoryInfo,
     AnalysisConfig,
-    AnalysisResult,
+    BaseAnalysisResult,
     ScanResult,
     ClassificationResult,
 )
@@ -23,8 +23,9 @@ from .ai_context import (
 )
 from .prompt_result import PromptResult, TokenUsage
 from .llm_response import LLMResponse
+from .task_context import TaskContext
 from .analysis_result import (
-    AnalysisResult as FinalAnalysisResult,
+    AnalysisResult,
     ArchitectureDiagram,
     ConfigAnalysis,
     ConfigFileInfo,
@@ -46,7 +47,7 @@ __all__ = [
     "AnalysisStatus",
     "RepositoryInfo",
     "AnalysisConfig",
-    "AnalysisResult",
+    "BaseAnalysisResult",
     "ScanResult",
     "ClassificationResult",
     "ProjectTechStack",
@@ -61,8 +62,10 @@ __all__ = [
     "PromptResult",
     "TokenUsage",
     "LLMResponse",
+    # 任务上下文模型
+    "TaskContext",
     # 分析结果模型
-    "FinalAnalysisResult",
+    "AnalysisResult",
     "TechStackAnalysis",
     "DirectoryStructureAnalysis",
     "CoreModuleAnalysis",

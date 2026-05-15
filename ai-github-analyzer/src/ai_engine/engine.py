@@ -8,8 +8,8 @@ from typing import Optional, Dict, Any
 from pathlib import Path
 from loguru import logger
 
-from ..models import AnalysisConfig, CompleteAnalysisResult
-from .orchestrator import TaskOrchestrator
+from ..models import AnalysisConfig, AnalysisResult
+from .orchestrator import AIOrchestrator
 
 
 class AIAnalysisEngine:
@@ -29,7 +29,7 @@ class AIAnalysisEngine:
     
     def __init__(self) -> None:
         """初始化 AI 分析引擎。"""
-        self.orchestrator: Optional[TaskOrchestrator] = None
+        self._orchestrator: Optional[AIOrchestrator] = None
         self._initialized: bool = False
     
     def initialize(self) -> None:
@@ -43,11 +43,11 @@ class AIAnalysisEngine:
             return
         
         logger.info("初始化 AI 分析引擎")
-        self.orchestrator = TaskOrchestrator()
+        self._orchestrator = AIOrchestrator()
         self._initialized = True
         logger.info("AI 分析引擎初始化完成")
     
-    def analyze(self, config: AnalysisConfig) -> CompleteAnalysisResult:
+    def analyze(self, config: AnalysisConfig) -> AnalysisResult:
         """
         执行完整的仓库分析流程。
         
@@ -55,7 +55,7 @@ class AIAnalysisEngine:
             config: 分析配置，包含仓库 URL 或本地路径
             
         Returns:
-            CompleteAnalysisResult: 完整的分析结果
+            AnalysisResult: 完整的分析结果
             
         Raises:
             RuntimeError: 当引擎未初始化时
@@ -92,7 +92,7 @@ class AIAnalysisEngine:
         """
         pass
     
-    def _execute_analysis(self, config: AnalysisConfig) -> CompleteAnalysisResult:
+    def _execute_analysis(self, config: AnalysisConfig) -> AnalysisResult:
         """
         执行实际的分析流程。
         
@@ -100,11 +100,11 @@ class AIAnalysisEngine:
             config: 已验证的分析配置
             
         Returns:
-            CompleteAnalysisResult: 分析结果
+            AnalysisResult: 分析结果
         """
         pass
     
-    def analyze_local(self, repo_path: str) -> CompleteAnalysisResult:
+    def analyze_local(self, repo_path: str) -> AnalysisResult:
         """
         分析本地仓库。
         
@@ -112,11 +112,11 @@ class AIAnalysisEngine:
             repo_path: 本地仓库路径
             
         Returns:
-            CompleteAnalysisResult: 分析结果
+            AnalysisResult: 分析结果
         """
         pass
     
-    def analyze_remote(self, repo_url: str) -> CompleteAnalysisResult:
+    def analyze_remote(self, repo_url: str) -> AnalysisResult:
         """
         分析远程 GitHub 仓库。
         
@@ -124,7 +124,7 @@ class AIAnalysisEngine:
             repo_url: GitHub 仓库 URL
             
         Returns:
-            CompleteAnalysisResult: 分析结果
+            AnalysisResult: 分析结果
         """
         pass
     
